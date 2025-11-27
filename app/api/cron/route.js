@@ -103,7 +103,7 @@ async function enviarParaBitrix(hoje, futuro) {
     }
 
     msg += "---------------------------------" + quebra;
-    msg += `[URL=https://${process.env.VERCEL_URL}]➡️ ABRIR GESTOR[/URL]`;
+    msg += `[URL=https://viver.bitrix24.com.br/marketplace/app/199/]➡️ ABRIR GESTOR[/URL]`;
 
     const webhookUrl = process.env.BITRIX_WEBHOOK_URL + "im.message.add";
     
