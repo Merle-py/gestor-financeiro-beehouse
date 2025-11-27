@@ -161,9 +161,14 @@ export default function GestorFinanceiro() {
     setEditingItem(item)
     if (item) {
         setFormData({
-            description: item.description || '', amount: item.amount || '', due_date: item.due_date || '',
-            supplier_id: item.supplier_id || '', category_id: item.category_id || '', status: item.status || 'Aberto',
-            name: item.name || '', type: item.type || ''
+            description: item.description || '',
+            amount: item.amount || '',
+            due_date: item.due_date || '',
+            supplier_id: item.supplier_id || '',
+            category_id: item.category_id || '',
+            status: item.status || 'Aberto',
+            name: item.name || '',
+            type: item.type || ''
         })
     } else {
         setFormData({
