@@ -196,6 +196,29 @@ export default function GestorFinanceiro() {
                 ? await supabase.from('transactions').update(payload).eq('id', editingItem.id)
                 : await supabase.from('transactions').insert([payload])
             if (error) throw error
+
+            // --- NOTIFICAÇÃO IMEDIATA (Se Vencido ou Urgente) ---
+            if (!editingItem && finalStatus !== 'Pago') {
+                const diasParaVencer = differenceInCalendarDays(parseISO(payload.due_date), new Date());
+                
+                if (finalStatus === 'Vencido' || diasParaVencer <= 2) {
+                    const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payload.amount);
+                    const tag = finalStatus === 'Vencido' ? '🚨 [B][COLOR=#ff0000]CONTA VENCIDA CRIADA[/COLOR][/B]' : '⚠️ [B]CONTA URGENTE CRIADA[/B]';
+                    
+                    const msg = `${tag}\n\n` +
+                                `Foi lançado um título que requer atenção:\n` +
+                                `▪ ${payload.description}\n` +
+                                `▪ Valor: ${valorFmt}\n` +
+                                `▪ Vencimento: ${new Date(payload.due_date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}\n\n` +
+                                `Verifique no Gestor Financeiro.`;
+
+                    fetch('/api/notify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: msg })
+                    }).catch(console.error);
+                }
+            }
         } 
         
         // 2. RECORRÊNCIA (COM ATUALIZAÇÃO EM CASCATA)
@@ -539,10 +562,10 @@ export default function GestorFinanceiro() {
                                 <h3 className="font-bold text-neutral-800 flex items-center gap-2"><TrendingUp size={18} className="text-[#f9b410]" /> Fluxo Mensal</h3>
                             </div>
                             <ResponsiveContainer width="100%" height="85%">
-                                <BarChart data={chartData.bar} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
+                                <BarChart data={chartData.bar} margin={{top: 10, right: 30, left: 20, bottom: 0}}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                     <XAxis dataKey="name" tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
-                                    <YAxis tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} width={80} tickFormatter={(value) => new Intl.NumberFormat('pt-BR', { notation: "compact", compactDisplay: "short", maximumFractionDigits: 1 }).format(value)} />
                                     <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc'}} />
                                     <Bar dataKey="total" fill="#f9b410" radius={[6, 6, 0, 0]} barSize={50} />
                                 </BarChart>
