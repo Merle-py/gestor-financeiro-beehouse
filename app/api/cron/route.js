@@ -26,21 +26,16 @@ async function gerarRecorrencias() {
     const mesesParaGerar = [hoje, addMonths(hoje, 1)]; 
     const novosLancamentos = [];
 
-    // Busca transações já lançadas para não duplicar
     const { data: transacoesExistentes } = await supabase.from('transactions').select('*');
 
     for (const mesRef of mesesParaGerar) {
         for (const item of recurring) {
             let dataVencimento = setDate(mesRef, item.day_of_month);
-            
-            // Corrige se o dia não existe no mês (ex: 31 de Fev)
             if (dataVencimento.getMonth() !== mesRef.getMonth()) {
                 dataVencimento = lastDayOfMonth(mesRef);
             }
-
             const dataString = format(dataVencimento, 'yyyy-MM-dd');
 
-            // Verifica duplicidade (agora usando o ID da regra se disponível, ou fallback para lógica antiga)
             const jaExiste = transacoesExistentes.some(t => 
                 (t.recurring_rule_id === item.id && t.due_date === dataString) || 
                 (t.supplier_id === item.supplier_id && parseFloat(t.amount) === parseFloat(item.amount) && t.due_date === dataString)
@@ -54,7 +49,8 @@ async function gerarRecorrencias() {
                     supplier_id: item.supplier_id,
                     category_id: item.category_id,
                     status: dataString < new Date().toISOString().split('T')[0] ? 'Vencido' : 'Aberto',
-                    recurring_rule_id: item.id // <--- O SEGREDO ESTÁ AQUI
+                    recurring_rule_id: item.id,
+                    type: 'despesa'
                 });
             }
         }
@@ -65,16 +61,14 @@ async function gerarRecorrencias() {
     }
 }
 
-
-// --- FUNÇÃO 2: NOTIFICAÇÕES (Sua lógica original preservada e encapsulada) ---
 async function verificarVencimentos() {
-    const hoje = new Date().toISOString().split('T')[0]; 
+    const hoje = new Date().toISOString().split('T')[0];
     const futuro = new Date();
     futuro.setDate(futuro.getDate() + 2);
     const dataFuturo = futuro.toISOString().split('T')[0];
 
-    const { data: contasHoje } = await supabase.from('transactions').select('*, suppliers(name)').eq('due_date', hoje).neq('status', 'Pago');
-    const { data: contasFuturo } = await supabase.from('transactions').select('*, suppliers(name)').eq('due_date', dataFuturo).neq('status', 'Pago');
+    const { data: contasHoje } = await supabase.from('transactions').select('*, suppliers(name)').eq('due_date', hoje).neq('status', 'Pago').eq('type', 'despesa');
+    const { data: contasFuturo } = await supabase.from('transactions').select('*, suppliers(name)').eq('due_date', dataFuturo).neq('status', 'Pago').eq('type', 'despesa');
 
     if ((contasHoje && contasHoje.length > 0) || (contasFuturo && contasFuturo.length > 0)) {
         await enviarParaBitrix(contasHoje || [], contasFuturo || []);
@@ -88,8 +82,7 @@ async function enviarParaBitrix(hoje, futuro) {
     const totalFuturo = futuro.reduce((sum, i) => sum + i.amount, 0);
     const quebra = "\n";
 
-    let msg = "💰 [B]FINANCEIRO BEEHOUSE[/B]" + quebra;
-    msg += "---------------------------------" + quebra;
+    let msg = "💰 [B]FINANCEIRO BEEHOUSE[/B]" + quebra + "---------------------------------" + quebra;
 
     if(hoje.length > 0) {
         msg += `🔴 [B][COLOR=#ff0000]VENCE HOJE (${hoje.length})[/COLOR][/B] - Total: R$ ${totalHoje.toFixed(2)}` + quebra;
@@ -102,18 +95,11 @@ async function enviarParaBitrix(hoje, futuro) {
         futuro.forEach(t => msg += `▪ ${t.description} - R$ ${t.amount}` + quebra);
     }
 
-    msg += "---------------------------------" + quebra;
-    msg += `[URL=https://viver.bitrix24.com.br/marketplace/app/199/]➡️ ABRIR GESTOR[/URL]`;
+    msg += "---------------------------------" + quebra + `[URL=https://${process.env.VERCEL_URL}]➡️ ABRIR GESTOR[/URL]`;
 
     const webhookUrl = process.env.BITRIX_WEBHOOK_URL + "im.message.add";
-    
     await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            "DIALOG_ID": process.env.ID_COLABORADOR_FINANCEIRO,
-            "MESSAGE": msg,
-            "SYSTEM": "Y"
-        })
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ "DIALOG_ID": process.env.ID_COLABORADOR_FINANCEIRO, "MESSAGE": msg, "SYSTEM": "Y" })
     });
 }
