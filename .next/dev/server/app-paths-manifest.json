@@ -1,4 +1,4 @@
 {
-  "/api/notify/route": "app/api/notify/route.js",
+  "/api/cron/route": "app/api/cron/route.js",
   "/page": "app/page.js"
 }
