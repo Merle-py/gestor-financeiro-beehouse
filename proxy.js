@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-export function middleware(request) {
+export function proxy(request) {
   
   // TRUQUE PARA BITRIX: Se vier um POST na página inicial, transforma em GET
   if (request.method === 'POST' && request.nextUrl.pathname === '/') {
