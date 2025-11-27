@@ -9,7 +9,7 @@ import {
   Repeat, RefreshCw
 } from 'lucide-react'
 import { 
-  format, isWithinInterval, parseISO, isValid, differenceInCalendarDays, startOfDay 
+  format, isWithinInterval, parseISO, isValid, differenceInCalendarDays, startOfDay, setDate, lastDayOfMonth 
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { 
@@ -17,25 +17,30 @@ import {
 } from 'recharts'
 
 export default function GestorFinanceiro() {
-  // --- ESTADOS ---
+  // --- ESTADOS GLOBAIS ---
   const [activeTab, setActiveTab] = useState('dashboard') 
   const [viewMode, setViewMode] = useState('kanban')
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   
+  // --- DADOS DO BANCO ---
   const [transactions, setTransactions] = useState([])
   const [suppliers, setSuppliers] = useState([])
   const [categories, setCategories] = useState([])
   const [recurringExpenses, setRecurringExpenses] = useState([])
 
+  // --- FILTROS ---
   const [filters, setFilters] = useState({
     search: '',
     status: 'Todos',
+    category: 'Todos',
+    supplier: 'Todos',
     startDate: '',
     endDate: ''
   })
 
+  // --- MODAL E FORMULÁRIO ---
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalType, setModalType] = useState('transaction') 
   const [editingItem, setEditingItem] = useState(null) 
@@ -43,7 +48,7 @@ export default function GestorFinanceiro() {
     description: '', amount: '', due_date: '', day_of_month: '', supplier_id: '', category_id: '', status: 'Aberto', name: '', type: ''
   })
 
-  // --- CARREGAMENTO ---
+  // --- CARREGAMENTO INICIAL ---
   async function fetchAllData() {
     setLoading(true)
     try {
@@ -64,7 +69,8 @@ export default function GestorFinanceiro() {
       setCategories(catRes.data || [])
       setRecurringExpenses(recurRes.data || [])
     } catch (error) {
-      console.error('Erro:', error)
+      console.error('Erro ao carregar dados:', error)
+      alert('Erro ao carregar dados. Verifique o console.')
     } finally {
       setLoading(false)
     }
@@ -72,7 +78,7 @@ export default function GestorFinanceiro() {
 
   useEffect(() => { fetchAllData() }, [])
 
-  // --- SINCRONIZAÇÃO MANUAL ---
+  // --- SINCRONIZAÇÃO MANUAL (Manual Trigger for Cron) ---
   async function forceSync() {
       setSyncing(true)
       try {
@@ -80,21 +86,26 @@ export default function GestorFinanceiro() {
           await fetchAllData();
           alert('Sistema sincronizado! Contas do mês atual e seguinte foram verificadas.');
       } catch (error) {
-          alert('Erro ao sincronizar.');
+          alert('Erro ao sincronizar: ' + error.message);
       } finally {
           setSyncing(false)
       }
   }
 
-  // --- FILTROS ---
+  // --- LÓGICA DE FILTRAGEM (TRANSAÇÕES) ---
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
+      // 1. Busca Textual
       const matchesSearch = 
         t.description?.toLowerCase().includes(filters.search.toLowerCase()) ||
         t.suppliers?.name?.toLowerCase().includes(filters.search.toLowerCase())
       
+      // 2. Filtros Exatos
       const matchesStatus = filters.status === 'Todos' || t.status === filters.status
+      const matchesCategory = filters.category === 'Todos' || t.category_id === filters.category
+      const matchesSupplier = filters.supplier === 'Todos' || t.supplier_id === filters.supplier
       
+      // 3. Filtro de Data
       let matchesDate = true
       if (filters.startDate && filters.endDate) {
         const date = parseISO(t.due_date)
@@ -105,11 +116,23 @@ export default function GestorFinanceiro() {
             })
         }
       }
-      return matchesSearch && matchesStatus && matchesDate
+      return matchesSearch && matchesStatus && matchesCategory && matchesSupplier && matchesDate
     })
   }, [transactions, filters])
 
-  // --- KANBAN ---
+  // --- LÓGICA DE FILTRAGEM (RECORRÊNCIAS) ---
+  const filteredRecurring = useMemo(() => {
+    return recurringExpenses.filter(r => {
+        const matchesSearch = r.description?.toLowerCase().includes(filters.search.toLowerCase()) ||
+                              r.suppliers?.name?.toLowerCase().includes(filters.search.toLowerCase())
+        const matchesCategory = filters.category === 'Todos' || r.category_id === filters.category
+        const matchesSupplier = filters.supplier === 'Todos' || r.supplier_id === filters.supplier
+        
+        return matchesSearch && matchesCategory && matchesSupplier
+    })
+  }, [recurringExpenses, filters])
+
+  // --- AGRUPAMENTO KANBAN (TEMPORAL) ---
   const kanbanColumns = useMemo(() => {
     const today = startOfDay(new Date())
     
@@ -151,6 +174,7 @@ export default function GestorFinanceiro() {
   async function handleSave() {
     setLoading(true)
     try {
+        // 1. TRANSAÇÃO AVULSA
         if (modalType === 'transaction') {
             const today = new Date().toISOString().split('T')[0]
             let finalStatus = formData.status
@@ -173,6 +197,8 @@ export default function GestorFinanceiro() {
                 : await supabase.from('transactions').insert([payload])
             if (error) throw error
         } 
+        
+        // 2. RECORRÊNCIA (COM ATUALIZAÇÃO EM CASCATA)
         else if (modalType === 'recurring') {
             const payload = {
                 description: formData.description,
@@ -182,11 +208,51 @@ export default function GestorFinanceiro() {
                 category_id: formData.category_id || null,
                 active: true
             }
+            
             const { error } = editingItem
                 ? await supabase.from('recurring_expenses').update(payload).eq('id', editingItem.id)
                 : await supabase.from('recurring_expenses').insert([payload])
+            
             if (error) throw error
+
+            // Se for edição, atualiza os lançamentos abertos vinculados
+            if (editingItem) {
+                const { data: linkedTrans } = await supabase.from('transactions')
+                    .select('*')
+                    .eq('recurring_rule_id', editingItem.id)
+                    .eq('status', 'Aberto') 
+
+                if (linkedTrans && linkedTrans.length > 0) {
+                    const updates = linkedTrans.map(t => {
+                        let newDate = t.due_date;
+                        // Se mudou o dia de vencimento, recalcula para o mês da transação
+                        if (parseInt(formData.day_of_month) !== editingItem.day_of_month) {
+                            const current = parseISO(t.due_date);
+                            let updatedDate = setDate(current, parseInt(formData.day_of_month));
+                            // Ajuste para fim de mês (ex: 31/02 -> 28/02)
+                            if (updatedDate.getMonth() !== current.getMonth()) updatedDate = lastDayOfMonth(current);
+                            newDate = format(updatedDate, 'yyyy-MM-dd');
+                        }
+                        
+                        return {
+                            id: t.id,
+                            description: payload.description,
+                            amount: payload.amount,
+                            supplier_id: payload.supplier_id,
+                            category_id: payload.category_id,
+                            due_date: newDate,
+                            // Atualiza status se a data voltou para o passado ou futuro
+                            status: newDate < new Date().toISOString().split('T')[0] ? 'Vencido' : 'Aberto' 
+                        }
+                    });
+                    
+                    const { error: upsertError } = await supabase.from('transactions').upsert(updates);
+                    if (upsertError) console.error("Erro ao atualizar transações vinculadas:", upsertError);
+                }
+            }
         }
+        
+        // 3. OUTROS (CADASTROS)
         else {
             const table = modalType === 'supplier' ? 'suppliers' : 'categories'
             const payload = modalType === 'supplier' 
@@ -198,6 +264,7 @@ export default function GestorFinanceiro() {
                 : await supabase.from(table).insert([payload])
             if (error) throw error
         }
+
         setIsModalOpen(false)
         setEditingItem(null)
         await fetchAllData()
@@ -223,7 +290,10 @@ export default function GestorFinanceiro() {
     setModalType(type)
     setEditingItem(item)
     const today = new Date().toISOString().split('T')[0]
+    
+    // Form padrão limpo
     const baseForm = { description: '', amount: '', due_date: today, day_of_month: '', supplier_id: '', category_id: '', status: 'Aberto', name: '', type: '' }
+
     if (item) {
         setFormData({ ...baseForm, ...item, supplier_id: item.supplier_id || '', category_id: item.category_id || '' })
     } else {
@@ -232,22 +302,27 @@ export default function GestorFinanceiro() {
     setIsModalOpen(true)
   }
 
-  // --- DADOS GRÁFICOS ---
+  // --- DADOS DOS GRÁFICOS ---
   const chartData = useMemo(() => {
     const catTotals = {}
     const monthTotals = {}
+    
+    // Usa 'filteredTransactions' para que os gráficos obedeçam aos filtros da tela
     filteredTransactions.forEach(t => {
         const cat = t.categories?.name || 'Sem Categoria'
         catTotals[cat] = (catTotals[cat] || 0) + t.amount
+        
         const m = format(parseISO(t.due_date), 'MMM', {locale: ptBR})
         monthTotals[m] = (monthTotals[m] || 0) + t.amount
     })
+    
     return {
         pie: Object.keys(catTotals).map(k => ({name: k, value: catTotals[k]})),
         bar: Object.keys(monthTotals).map(k => ({name: k, total: monthTotals[k]}))
     }
   }, [filteredTransactions])
 
+  // --- CONFIGURAÇÃO DE CORES E UI ---
   const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -288,12 +363,85 @@ export default function GestorFinanceiro() {
       )
   }
 
+  // --- COMPONENTE DE BARRA DE FILTROS ---
+  const FilterBar = ({ showDates = true, showStatus = true }) => (
+    <div className="bg-white p-4 rounded-xl border border-neutral-200 mb-4 flex flex-wrap gap-3 items-end shadow-sm flex-shrink-0">
+        
+        {/* Busca */}
+        <div className="flex-1 min-w-[200px]">
+            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Busca</label>
+            <div className="relative group">
+                <Search className="absolute left-3 top-2.5 text-neutral-400 group-focus-within:text-[#f9b410] transition-colors" size={16}/>
+                <input className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm focus:ring-2 focus:ring-[#f9b410] focus:bg-white outline-none transition-all" 
+                    placeholder="Descrição..." value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} />
+            </div>
+        </div>
+
+        {/* Status */}
+        {showStatus && (
+            <div className="w-32">
+                <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Status</label>
+                <select className="w-full py-2 px-3 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" 
+                    value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})}>
+                    <option value="Todos">Todos</option>
+                    <option value="Aberto">Aberto</option>
+                    <option value="Pago">Pago</option>
+                    <option value="Vencido">Vencido</option>
+                </select>
+            </div>
+        )}
+
+        {/* Categoria */}
+        <div className="w-40">
+            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Categoria</label>
+            <select className="w-full py-2 px-3 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" 
+                value={filters.category} onChange={e => setFilters({...filters, category: e.target.value})}>
+                <option value="Todos">Todas</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+        </div>
+
+        {/* Fornecedor */}
+        <div className="w-40">
+            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Fornecedor</label>
+            <select className="w-full py-2 px-3 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" 
+                value={filters.supplier} onChange={e => setFilters({...filters, supplier: e.target.value})}>
+                <option value="Todos">Todos</option>
+                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+        </div>
+
+        {/* Datas */}
+        {showDates && (
+            <>
+                <div className="w-36">
+                    <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">De</label>
+                    <input type="date" className="w-full py-2 px-3 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" 
+                        value={filters.startDate} onChange={e => setFilters({...filters, startDate: e.target.value})} />
+                </div>
+                <div className="w-36">
+                    <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Até</label>
+                    <input type="date" className="w-full py-2 px-3 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" 
+                        value={filters.endDate} onChange={e => setFilters({...filters, endDate: e.target.value})} />
+                </div>
+            </>
+        )}
+
+        {/* Botão Limpar Filtros */}
+        <button onClick={() => setFilters({search: '', status: 'Todos', category: 'Todos', supplier: 'Todos', startDate: '', endDate: ''})} 
+            className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Limpar Filtros">
+            <X size={20} />
+        </button>
+    </div>
+  )
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#f8fafc] text-neutral-800 font-sans">
       
-      {/* SIDEBAR */}
+      {/* SIDEBAR ESTILO BEEHOUSE (Preto e Amarelo) */}
       <aside className={`fixed top-0 left-0 h-full bg-black border-r border-neutral-900 z-30 transition-all duration-300 ease-in-out flex flex-col ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
         <div className="p-6 flex justify-between items-center h-24">
+             {/* LOGO */}
              <img src="https://www.beehouse.imb.br/assets/img/lay/logo-nov2025.svg?c=1" alt="Beehouse Logo" className="w-40 object-contain" />
              <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-neutral-400 hover:text-white"><ChevronLeft size={20} /></button>
         </div>
@@ -316,6 +464,7 @@ export default function GestorFinanceiro() {
             ))}
         </nav>
 
+        {/* Footer do Menu */}
         <div className="p-4 border-t border-neutral-900">
             <div className="bg-neutral-900 p-3 rounded-lg flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-[#f9b410] flex items-center justify-center text-black font-bold text-xs">BH</div>
@@ -338,7 +487,7 @@ export default function GestorFinanceiro() {
             <div className="flex items-center gap-4">
                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-neutral-100 text-neutral-500 transition-colors"><Menu size={20} /></button>
                 <h1 className="text-xl font-bold text-neutral-900 capitalize">
-                    {activeTab === 'dashboard' ? 'Visão Geral' : activeTab === 'recorrencias' ? 'Recorrências' : activeTab}
+                    {activeTab === 'dashboard' ? 'Visão Geral' : activeTab === 'recorrencias' ? 'Contas Recorrentes' : activeTab}
                 </h1>
             </div>
             <div className="flex gap-2 md:gap-3">
@@ -348,6 +497,8 @@ export default function GestorFinanceiro() {
                         <button onClick={() => setViewMode('kanban')} className={`p-1.5 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-white text-black shadow-sm' : 'text-neutral-400'}`}><KanbanIcon size={18}/></button>
                     </div>
                 )}
+                
+                {/* Botão de Sincronizar Manual na aba de Recorrências */}
                 {activeTab === 'recorrencias' && (
                     <button onClick={forceSync} disabled={syncing}
                         className="bg-neutral-900 hover:bg-black text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition active:scale-95 disabled:opacity-70">
@@ -355,6 +506,7 @@ export default function GestorFinanceiro() {
                         <span className="hidden sm:inline">{syncing ? 'Sincronizando...' : 'Sincronizar'}</span>
                     </button>
                 )}
+
                 <button onClick={() => openModal(activeTab === 'lancamentos' ? 'transaction' : activeTab === 'recorrencias' ? 'recurring' : activeTab === 'fornecedores' ? 'supplier' : 'category')} 
                     className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm shadow-orange-100 transition active:scale-95">
                     <Plus size={18}/> <span className="hidden sm:inline">Novo</span>
@@ -363,9 +515,13 @@ export default function GestorFinanceiro() {
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#f8fafc]">
-            {/* DASHBOARD - MAX WIDTH AUMENTADO PARA 98% */}
+            
+            {/* 1. DASHBOARD - COM BARRA DE FILTROS */}
             {activeTab === 'dashboard' && (
                 <div className="w-full max-w-[98%] mx-auto space-y-6">
+                    {/* BARRA DE FILTROS AQUI TAMBÉM */}
+                    <FilterBar />
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                         <KpiCard title="A Pagar" icon={ArrowDownRight} colorTheme="danger" 
                             value={new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(filteredTransactions.filter(t => t.status !== 'Pago').reduce((a,b)=>a+b.amount,0))} />
@@ -408,67 +564,55 @@ export default function GestorFinanceiro() {
                 </div>
             )}
 
-            {/* RECORRÊNCIAS - MAX WIDTH AUMENTADO */}
+            {/* 2. RECORRÊNCIAS - COM FILTROS */}
             {activeTab === 'recorrencias' && (
-                <div className="w-full max-w-[98%] mx-auto bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden">
-                    <div className="p-4 bg-neutral-50 border-b border-neutral-200 flex justify-between items-center">
-                        <p className="text-sm text-neutral-500">Cadastre suas contas fixas aqui.</p>
+                <div className="w-full max-w-[98%] mx-auto bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden flex flex-col h-full">
+                    {/* Filtros customizados para Recorrências (sem data) */}
+                    <div className="p-4 border-b border-neutral-100 bg-neutral-50/50">
+                        <FilterBar showDates={false} showStatus={false} />
                     </div>
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-neutral-100 text-neutral-500 font-semibold border-b">
-                            <tr>
-                                <th className="px-6 py-3">Dia</th>
-                                <th className="px-6 py-3">Descrição</th>
-                                <th className="px-6 py-3">Fornecedor</th>
-                                <th className="px-6 py-3 text-right">Valor</th>
-                                <th className="px-6 py-3 text-center">Status</th>
-                                <th className="px-6 py-3 text-center">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-neutral-100">
-                            {recurringExpenses.map(r => (
-                                <tr key={r.id} className="hover:bg-neutral-50">
-                                    <td className="px-6 py-3 font-bold text-neutral-700">Dia {r.day_of_month}</td>
-                                    <td className="px-6 py-3 font-medium">{r.description}</td>
-                                    <td className="px-6 py-3 text-neutral-500">{r.suppliers?.name}</td>
-                                    <td className="px-6 py-3 text-right font-bold">{new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(r.amount)}</td>
-                                    <td className="px-6 py-3 text-center">
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${r.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                                            {r.active ? 'Ativo' : 'Pausado'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-3 text-center flex justify-center gap-2">
-                                        <button onClick={() => openModal('recurring', r)} className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Edit size={16}/></button>
-                                        <button onClick={() => handleDelete(r.id, 'recurring_expenses')} className="text-rose-600 hover:bg-rose-50 p-1 rounded"><Trash2 size={16}/></button>
-                                    </td>
+
+                    <div className="flex-1 overflow-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-neutral-100 text-neutral-500 font-semibold border-b">
+                                <tr>
+                                    <th className="px-6 py-3">Dia</th>
+                                    <th className="px-6 py-3">Descrição</th>
+                                    <th className="px-6 py-3">Fornecedor</th>
+                                    <th className="px-6 py-3 text-right">Valor</th>
+                                    <th className="px-6 py-3 text-center">Status</th>
+                                    <th className="px-6 py-3 text-center">Ações</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-neutral-100">
+                                {filteredRecurring.map(r => (
+                                    <tr key={r.id} className="hover:bg-neutral-50">
+                                        <td className="px-6 py-3 font-bold text-neutral-700">Dia {r.day_of_month}</td>
+                                        <td className="px-6 py-3 font-medium">{r.description}</td>
+                                        <td className="px-6 py-3 text-neutral-500">{r.suppliers?.name}</td>
+                                        <td className="px-6 py-3 text-right font-bold">{new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(r.amount)}</td>
+                                        <td className="px-6 py-3 text-center">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${r.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                                                {r.active ? 'Ativo' : 'Pausado'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-3 text-center flex justify-center gap-2">
+                                            <button onClick={() => openModal('recurring', r)} className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Edit size={16}/></button>
+                                            <button onClick={() => handleDelete(r.id, 'recurring_expenses')} className="text-rose-600 hover:bg-rose-50 p-1 rounded"><Trash2 size={16}/></button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
-            {/* LANÇAMENTOS - MAX WIDTH AUMENTADO */}
+            {/* 3. LANÇAMENTOS - COM FILTROS COMPLETOS */}
             {activeTab === 'lancamentos' && (
                 <div className="h-full flex flex-col w-full max-w-[98%] mx-auto">
-                    <div className="bg-white p-4 rounded-xl border border-neutral-200 mb-4 flex flex-wrap gap-4 items-end shadow-sm flex-shrink-0">
-                        <div className="flex-1 min-w-[200px]">
-                            <label className="text-xs font-bold text-neutral-400 uppercase mb-1 block">Busca</label>
-                            <div className="relative group">
-                                <Search className="absolute left-3 top-2.5 text-neutral-400 group-focus-within:text-[#f9b410] transition-colors" size={16}/>
-                                <input className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm focus:ring-2 focus:ring-[#f9b410] focus:bg-white outline-none transition-all" placeholder="Descrição, fornecedor..." value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-neutral-400 uppercase mb-1 block">Status</label>
-                            <select className="py-2 px-3 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})}>
-                                <option value="Todos">Todos</option>
-                                <option value="Aberto">Aberto</option>
-                                <option value="Pago">Pago</option>
-                                <option value="Vencido">Vencido</option>
-                            </select>
-                        </div>
-                    </div>
+                    {/* BARRA DE FILTROS COMPLETA */}
+                    <FilterBar />
 
                     <div className="flex-1 min-h-0">
                         {viewMode === 'list' ? (
@@ -517,7 +661,7 @@ export default function GestorFinanceiro() {
                                                 {col.items.map(t => (
                                                     <div key={t.id} className="bg-white p-2.5 rounded-lg shadow-sm border border-neutral-200 hover:shadow-md hover:border-neutral-300 transition-all group relative">
                                                         <div className="flex justify-between items-start mb-1">
-                                                            <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider truncate max-w-[150px] bg-neutral-50 px-1 rounded">{t.categories?.name || 'Geral'}</span>
+                                                            <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider truncate max-w-[80px] bg-neutral-50 px-1 rounded">{t.categories?.name || 'Geral'}</span>
                                                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition bg-white rounded-md shadow-sm p-0.5 absolute right-1 top-1 border border-neutral-100 z-10">
                                                                 <button onClick={() => openModal('transaction', t)} className="p-1 hover:bg-blue-50 text-blue-600 rounded"><Edit size={10} /></button>
                                                                 <button onClick={() => handleDelete(t.id, 'transactions')} className="p-1 hover:bg-rose-50 text-rose-600 rounded"><Trash2 size={10} /></button>
@@ -558,7 +702,7 @@ export default function GestorFinanceiro() {
                 </div>
             )}
 
-            {/* TABELAS SIMPLES */}
+            {/* 4. TABELAS SIMPLES (CADASTROS) */}
             {(activeTab === 'fornecedores' || activeTab === 'categorias') && (
                 <div className="w-full max-w-[98%] mx-auto bg-white rounded-xl shadow-sm border border-neutral-200">
                     <table className="w-full text-left text-sm">

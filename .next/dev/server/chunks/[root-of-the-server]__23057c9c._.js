@@ -64,17 +64,14 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$lastDayOfMonth$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/date-fns/lastDayOfMonth.js [app-route] (ecmascript)");
 ;
 ;
-const dynamic = 'force-dynamic'; // Garante que a função rode sempre fresca
+const dynamic = 'force-dynamic';
 async function GET(request) {
-    // Verificação de segurança (opcional, mas recomendado)
     const authHeader = request.headers.get('authorization');
     if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    // return new Response('Unauthorized', { status: 401 }); 
+    // return new Response('Unauthorized', { status: 401 });
     }
     try {
-        // 1. GERAR CONTAS RECORRENTES (Mês Atual + Próximo Mês)
         await gerarRecorrencias();
-        // 2. ENVIAR NOTIFICAÇÕES (Seu código original de notificação)
         const notificationResult = await verificarVencimentos();
         return Response.json({
             success: true,
@@ -88,35 +85,27 @@ async function GET(request) {
         });
     }
 }
-// --- FUNÇÃO 1: GERAÇÃO AUTOMÁTICA DE CONTAS ---
 async function gerarRecorrencias() {
     const { data: recurring } = await __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$lib$2f$supabase$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabase"].from('recurring_expenses').select('*').eq('active', true);
     if (!recurring || recurring.length === 0) return;
     const hoje = new Date();
-    // Gera para o mês atual e para o próximo mês (para previsão)
     const mesesParaGerar = [
         hoje,
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$addMonths$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["addMonths"])(hoje, 1)
     ];
     const novosLancamentos = [];
-    // Busca transações existentes nesses meses para evitar duplicidade
-    // (Uma otimização seria filtrar por data no banco, mas faremos verificação em memória para simplificar a lógica de "mesmo fornecedor/valor")
+    // Busca transações já lançadas para não duplicar
     const { data: transacoesExistentes } = await __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$lib$2f$supabase$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabase"].from('transactions').select('*');
     for (const mesRef of mesesParaGerar){
         for (const item of recurring){
-            // Calcula a data de vencimento correta
-            // Ex: Se o dia é 31 e o mês só tem 30 dias, o date-fns/js ajustaria para dia 1 do outro mês.
-            // Vamos garantir que fique no último dia do mês correto.
             let dataVencimento = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$setDate$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["setDate"])(mesRef, item.day_of_month);
-            // Correção: Se o dia gerado mudou de mês (ex: era dia 31/02 -> virou março), volta para o último dia do mês correto
+            // Corrige se o dia não existe no mês (ex: 31 de Fev)
             if (dataVencimento.getMonth() !== mesRef.getMonth()) {
                 dataVencimento = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$lastDayOfMonth$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["lastDayOfMonth"])(mesRef);
             }
             const dataString = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$format$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__$3c$locals$3e$__["format"])(dataVencimento, 'yyyy-MM-dd');
-            // Verifica se já existe (Mesmo Fornecedor + Mesmo Valor + Mesma Data)
-            // Isso evita criar duplicado se o cron rodar várias vezes
-            const jaExiste = transacoesExistentes.some((t)=>t.supplier_id === item.supplier_id && // Compara valor como string ou número (margem segura)
-                parseFloat(t.amount) === parseFloat(item.amount) && t.due_date === dataString);
+            // Verifica duplicidade (agora usando o ID da regra se disponível, ou fallback para lógica antiga)
+            const jaExiste = transacoesExistentes.some((t)=>t.recurring_rule_id === item.id && t.due_date === dataString || t.supplier_id === item.supplier_id && parseFloat(t.amount) === parseFloat(item.amount) && t.due_date === dataString);
             if (!jaExiste) {
                 novosLancamentos.push({
                     description: item.description,
@@ -124,15 +113,14 @@ async function gerarRecorrencias() {
                     due_date: dataString,
                     supplier_id: item.supplier_id,
                     category_id: item.category_id,
-                    status: dataString < new Date().toISOString().split('T')[0] ? 'Vencido' : 'Aberto'
+                    status: dataString < new Date().toISOString().split('T')[0] ? 'Vencido' : 'Aberto',
+                    recurring_rule_id: item.id // <--- O SEGREDO ESTÁ AQUI
                 });
             }
         }
     }
     if (novosLancamentos.length > 0) {
-        const { error } = await __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$lib$2f$supabase$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabase"].from('transactions').insert(novosLancamentos);
-        if (error) console.error('Erro ao gerar recorrências:', error);
-        else console.log(`Geradas ${novosLancamentos.length} novas contas recorrentes.`);
+        await __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$lib$2f$supabase$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabase"].from('transactions').insert(novosLancamentos);
     }
 }
 // --- FUNÇÃO 2: NOTIFICAÇÕES (Sua lógica original preservada e encapsulada) ---

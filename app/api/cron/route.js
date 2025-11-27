@@ -1,63 +1,49 @@
 import { supabase } from '../../lib/supabase';
-import { addMonths, setDate, format, lastDayOfMonth, getDate } from 'date-fns';
+import { addMonths, setDate, format, lastDayOfMonth } from 'date-fns';
 
-export const dynamic = 'force-dynamic'; // Garante que a função rode sempre fresca
+export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
-  // Verificação de segurança (opcional, mas recomendado)
   const authHeader = request.headers.get('authorization');
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    // return new Response('Unauthorized', { status: 401 }); 
+    // return new Response('Unauthorized', { status: 401 });
   }
 
   try {
-    // 1. GERAR CONTAS RECORRENTES (Mês Atual + Próximo Mês)
     await gerarRecorrencias();
-
-    // 2. ENVIAR NOTIFICAÇÕES (Seu código original de notificação)
     const notificationResult = await verificarVencimentos();
-
     return Response.json({ success: true, notification: notificationResult });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
 
-// --- FUNÇÃO 1: GERAÇÃO AUTOMÁTICA DE CONTAS ---
 async function gerarRecorrencias() {
     const { data: recurring } = await supabase.from('recurring_expenses').select('*').eq('active', true);
     if (!recurring || recurring.length === 0) return;
 
     const hoje = new Date();
-    // Gera para o mês atual e para o próximo mês (para previsão)
     const mesesParaGerar = [hoje, addMonths(hoje, 1)]; 
     const novosLancamentos = [];
 
-    // Busca transações existentes nesses meses para evitar duplicidade
-    // (Uma otimização seria filtrar por data no banco, mas faremos verificação em memória para simplificar a lógica de "mesmo fornecedor/valor")
+    // Busca transações já lançadas para não duplicar
     const { data: transacoesExistentes } = await supabase.from('transactions').select('*');
 
     for (const mesRef of mesesParaGerar) {
         for (const item of recurring) {
-            // Calcula a data de vencimento correta
-            // Ex: Se o dia é 31 e o mês só tem 30 dias, o date-fns/js ajustaria para dia 1 do outro mês.
-            // Vamos garantir que fique no último dia do mês correto.
             let dataVencimento = setDate(mesRef, item.day_of_month);
             
-            // Correção: Se o dia gerado mudou de mês (ex: era dia 31/02 -> virou março), volta para o último dia do mês correto
+            // Corrige se o dia não existe no mês (ex: 31 de Fev)
             if (dataVencimento.getMonth() !== mesRef.getMonth()) {
                 dataVencimento = lastDayOfMonth(mesRef);
             }
 
             const dataString = format(dataVencimento, 'yyyy-MM-dd');
 
-            // Verifica se já existe (Mesmo Fornecedor + Mesmo Valor + Mesma Data)
-            // Isso evita criar duplicado se o cron rodar várias vezes
+            // Verifica duplicidade (agora usando o ID da regra se disponível, ou fallback para lógica antiga)
             const jaExiste = transacoesExistentes.some(t => 
-                t.supplier_id === item.supplier_id &&
-                // Compara valor como string ou número (margem segura)
-                parseFloat(t.amount) === parseFloat(item.amount) && 
-                t.due_date === dataString
+                (t.recurring_rule_id === item.id && t.due_date === dataString) || 
+                (t.supplier_id === item.supplier_id && parseFloat(t.amount) === parseFloat(item.amount) && t.due_date === dataString)
             );
 
             if (!jaExiste) {
@@ -68,19 +54,17 @@ async function gerarRecorrencias() {
                     supplier_id: item.supplier_id,
                     category_id: item.category_id,
                     status: dataString < new Date().toISOString().split('T')[0] ? 'Vencido' : 'Aberto',
-                    // Adicionamos uma flag opcional para saber que veio da recorrência
-                    // recurring_source_id: item.id (se você quiser criar esse campo na tabela transactions depois)
+                    recurring_rule_id: item.id // <--- O SEGREDO ESTÁ AQUI
                 });
             }
         }
     }
 
     if (novosLancamentos.length > 0) {
-        const { error } = await supabase.from('transactions').insert(novosLancamentos);
-        if (error) console.error('Erro ao gerar recorrências:', error);
-        else console.log(`Geradas ${novosLancamentos.length} novas contas recorrentes.`);
+        await supabase.from('transactions').insert(novosLancamentos);
     }
 }
+
 
 // --- FUNÇÃO 2: NOTIFICAÇÕES (Sua lógica original preservada e encapsulada) ---
 async function verificarVencimentos() {
