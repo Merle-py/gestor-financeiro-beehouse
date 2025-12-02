@@ -130,8 +130,7 @@ export default function GestorFinanceiro() {
     const [syncing, setSyncing] = useState(false)
     const [dateResetKey, setDateResetKey] = useState(0)
 
-    // Novo estado para controlar a sub-aba de lançamentos
-    const [lancamentoMode, setLancamentoMode] = useState('saida') // 'saida' | 'entrada'
+    const [lancamentoMode, setLancamentoMode] = useState('saida')
 
     const [transactions, setTransactions] = useState([])
     const [suppliers, setSuppliers] = useState([])
@@ -163,7 +162,7 @@ export default function GestorFinanceiro() {
                 if (diff === 0) return <span className="text-emerald-600 font-bold">Pago no dia</span>;
                 return <span className="text-blue-600 font-bold">Pago {diff}d adiantado</span>;
             }
-            return <span className="text-emerald-600 font-bold">Pago</span>; // Fallback se não tiver data recebimento
+            return <span className="text-emerald-600 font-bold">Pago</span>;
         }
         const diff = differenceInCalendarDays(dueDate, new Date());
         if (diff < 0) return <span className="text-red-500 font-bold">{Math.abs(diff)}d de atraso</span>;
@@ -231,7 +230,6 @@ export default function GestorFinanceiro() {
     const financialMetrics = useMemo(() => {
         const data = filteredTransactions.filter(t => t.status !== 'Cancelado');
 
-        // VGC: Valor Geral de Comissão (Entrada Bruta)
         const vgc = data.filter(t => t.type === 'receita').reduce((acc, t) => acc + Number(t.amount), 0);
 
         const isRepasse = (t) => {
@@ -299,9 +297,7 @@ export default function GestorFinanceiro() {
         const today = startOfDay(new Date())
         const targetType = lancamentoMode === 'entrada' ? 'receita' : 'despesa';
 
-        // Definição das colunas baseadas no MODO (Entrada ou Saída)
         let cols = {};
-
         if (lancamentoMode === 'saida') {
             cols = {
                 vencido: { title: 'Vencidos', items: [], color: 'bg-red-50 border-red-100 text-red-700' },
@@ -320,7 +316,6 @@ export default function GestorFinanceiro() {
             }
         }
 
-        // Filtra transações pelo TIPO da aba atual
         const sorted = [...filteredTransactions]
             .filter(t => t.type === targetType)
             .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
@@ -334,7 +329,7 @@ export default function GestorFinanceiro() {
             else cols.aberto.items.push(t);
         })
         return cols
-    }, [filteredTransactions, activeTab, lancamentoMode]) // Reage à mudança de aba de lançamentos
+    }, [filteredTransactions, activeTab, lancamentoMode])
 
     async function handleSave() {
         setLoading(true)
@@ -348,7 +343,6 @@ export default function GestorFinanceiro() {
                     else finalStatus = 'Aberto'
                 }
 
-                // Força o tipo se estiver vindo da aba de lançamentos restrita
                 const forcedType = (activeTab === 'lancamentos')
                     ? (lancamentoMode === 'entrada' ? 'receita' : 'despesa')
                     : formData.type_trans;
@@ -423,10 +417,9 @@ export default function GestorFinanceiro() {
         setModalType(type); setEditingItem(item);
         const today = new Date().toISOString().split('T')[0]
 
-        // Define o tipo padrão com base na aba ativa (Se estiver em lançamentos, respeita o filtro)
         let defaultType = 'despesa';
         if (activeTab === 'lancamentos' && lancamentoMode === 'entrada') defaultType = 'receita';
-        if (item) defaultType = item.type; // Se for edição, respeita o item
+        if (item) defaultType = item.type;
 
         setFormData({ description: '', amount: '', due_date: today, day_of_month: '', supplier_id: '', category_id: '', status: 'Aberto', name: '', type: '', type_trans: defaultType, nf_number: '', nf_issue_date: '', nf_received_date: '' })
         if (type === 'transaction' && item) setFormData({ ...item, type_trans: item.type })
@@ -785,15 +778,8 @@ export default function GestorFinanceiro() {
 
                             <div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Descrição</label><input className="w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] focus:border-transparent transition-all" defaultValue={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4"><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Valor</label><input type="number" step="0.01" className="w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all" defaultValue={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} /></div><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Vencimento</label><input type="date" className="w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all" defaultValue={formData.due_date} onChange={e => setFormData({ ...formData, due_date: e.target.value })} /></div></div>
-                            {/* Campos de NF */}
-                            <div className="bg-neutral-50 p-3 rounded-lg border border-neutral-200">
-                                <p className="text-[10px] font-bold text-neutral-500 uppercase mb-2 flex items-center gap-1"><FileText size={12} /> Dados da Nota Fiscal / Recibo</p>
-                                <div className="grid grid-cols-2 gap-2 mb-2">
-                                    <div><label className="text-[9px] font-bold text-neutral-400 uppercase block mb-1">Número da NF</label><input placeholder="Ex: 1234" className="w-full border p-2 rounded text-sm" defaultValue={formData.nf_number} onChange={e => setFormData({ ...formData, nf_number: e.target.value })} /></div>
-                                    <div><label className="text-[9px] font-bold text-neutral-400 uppercase block mb-1">Data Emissão</label><input type="date" className="w-full border p-2 rounded text-sm" defaultValue={formData.nf_issue_date} onChange={e => setFormData({ ...formData, nf_issue_date: e.target.value })} /></div>
-                                </div>
-                                <div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Data de {formData.type_trans === 'receita' ? 'Recebimento' : 'Pagamento'}</label><input type="date" className="w-full border p-2 rounded text-sm" defaultValue={formData.nf_received_date} onChange={e => setFormData({ ...formData, nf_received_date: e.target.value })} /><p className="text-[9px] text-neutral-400 mt-1">*Preencher isso marca a conta como {formData.type_trans === 'receita' ? 'Paga/Recebida' : 'Paga'}.</p></div>
-                            </div>
+
+                            {/* Bloco de NF Removido */}
 
                             <div className="grid grid-cols-2 gap-4"><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Entidade (Favorecido)</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.supplier_id} onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}><option value="">Selecione...</option>{suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Plano de Contas</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.category_id} onChange={e => setFormData({ ...formData, category_id: e.target.value })}><option value="">Selecione...</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div></div><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Status Inicial</label><div className="flex gap-2"><button onClick={() => setFormData({ ...formData, status: 'Aberto' })} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Aberto' ? 'bg-neutral-800 text-white border-neutral-800 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>Aberto</button><button onClick={() => setFormData({ ...formData, status: 'Pago' })} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Pago' ? 'bg-emerald-500 text-white border-emerald-500 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>{formData.type_trans === 'receita' ? 'Recebido' : 'Pago'}</button></div></div>
                         </>
