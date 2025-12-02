@@ -3328,7 +3328,7 @@ function GestorFinanceiro() {
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
                                     className: "font-bold text-lg text-neutral-800",
-                                    children: modalType === 'recurring' ? 'Conta Recorrente' : modalType === 'bonus' ? 'Lançar Bônus' : 'Novo Registro'
+                                    children: modalType === 'recurring' ? 'Conta Recorrente' : modalType === 'bonus' ? 'Lançar Bônus' : modalType === 'installment' ? 'Lançar Recebimento' : 'Novo Registro'
                                 }, void 0, false, {
                                     fileName: "[project]/app/page.js",
                                     lineNumber: 760,
@@ -3342,12 +3342,12 @@ function GestorFinanceiro() {
                                     }, void 0, false, {
                                         fileName: "[project]/app/page.js",
                                         lineNumber: 760,
-                                        columnNumber: 558
+                                        columnNumber: 611
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/app/page.js",
                                     lineNumber: 760,
-                                    columnNumber: 512
+                                    columnNumber: 565
                                 }, this)
                             ]
                         }, void 0, true, {
@@ -3396,7 +3396,7 @@ function GestorFinanceiro() {
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                    className: "text-xs font-bold text-neutral-500 uppercase",
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                     children: "Descrição"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/page.js",
@@ -3404,7 +3404,7 @@ function GestorFinanceiro() {
                                                     columnNumber: 34
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                    className: "w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410] focus:border-transparent transition-all",
+                                                    className: "w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] focus:border-transparent transition-all",
                                                     defaultValue: formData.description,
                                                     onChange: (e)=>setFormData({
                                                             ...formData,
@@ -3413,7 +3413,7 @@ function GestorFinanceiro() {
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 779,
-                                                    columnNumber: 115
+                                                    columnNumber: 130
                                                 }, this)
                                             ]
                                         }, void 0, true, {
@@ -3427,7 +3427,7 @@ function GestorFinanceiro() {
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                            className: "text-xs font-bold text-neutral-500 uppercase",
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                             children: "Valor"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
@@ -3437,7 +3437,7 @@ function GestorFinanceiro() {
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                             type: "number",
                                                             step: "0.01",
-                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all",
+                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all",
                                                             defaultValue: formData.amount,
                                                             onChange: (e)=>setFormData({
                                                                     ...formData,
@@ -3446,7 +3446,7 @@ function GestorFinanceiro() {
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 780,
-                                                            columnNumber: 151
+                                                            columnNumber: 166
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
@@ -3457,16 +3457,16 @@ function GestorFinanceiro() {
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                            className: "text-xs font-bold text-neutral-500 uppercase",
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                             children: "Vencimento"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 780,
-                                                            columnNumber: 426
+                                                            columnNumber: 436
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                             type: "date",
-                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all",
+                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all",
                                                             defaultValue: formData.due_date,
                                                             onChange: (e)=>setFormData({
                                                                     ...formData,
@@ -3475,13 +3475,13 @@ function GestorFinanceiro() {
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 780,
-                                                            columnNumber: 508
+                                                            columnNumber: 533
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 780,
-                                                    columnNumber: 421
+                                                    columnNumber: 431
                                                 }, this)
                                             ]
                                         }, void 0, true, {
@@ -3512,29 +3512,60 @@ function GestorFinanceiro() {
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     className: "grid grid-cols-2 gap-2 mb-2",
                                                     children: [
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                            placeholder: "Número da NF",
-                                                            className: "w-full border p-2 rounded text-sm",
-                                                            defaultValue: formData.nf_number,
-                                                            onChange: (e)=>setFormData({
-                                                                    ...formData,
-                                                                    nf_number: e.target.value
-                                                                })
-                                                        }, void 0, false, {
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                            children: [
+                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                                    className: "text-[9px] font-bold text-neutral-400 uppercase block mb-1",
+                                                                    children: "Número da NF"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/app/page.js",
+                                                                    lineNumber: 785,
+                                                                    columnNumber: 42
+                                                                }, this),
+                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                                    placeholder: "Ex: 1234",
+                                                                    className: "w-full border p-2 rounded text-sm",
+                                                                    defaultValue: formData.nf_number,
+                                                                    onChange: (e)=>setFormData({
+                                                                            ...formData,
+                                                                            nf_number: e.target.value
+                                                                        })
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/app/page.js",
+                                                                    lineNumber: 785,
+                                                                    columnNumber: 140
+                                                                }, this)
+                                                            ]
+                                                        }, void 0, true, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 785,
                                                             columnNumber: 37
                                                         }, this),
-                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                            type: "date",
-                                                            title: "Data Emissão",
-                                                            className: "w-full border p-2 rounded text-sm",
-                                                            defaultValue: formData.nf_issue_date,
-                                                            onChange: (e)=>setFormData({
-                                                                    ...formData,
-                                                                    nf_issue_date: e.target.value
-                                                                })
-                                                        }, void 0, false, {
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                            children: [
+                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                                    className: "text-[9px] font-bold text-neutral-400 uppercase block mb-1",
+                                                                    children: "Data Emissão"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/app/page.js",
+                                                                    lineNumber: 786,
+                                                                    columnNumber: 42
+                                                                }, this),
+                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                                    type: "date",
+                                                                    className: "w-full border p-2 rounded text-sm",
+                                                                    defaultValue: formData.nf_issue_date,
+                                                                    onChange: (e)=>setFormData({
+                                                                            ...formData,
+                                                                            nf_issue_date: e.target.value
+                                                                        })
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/app/page.js",
+                                                                    lineNumber: 786,
+                                                                    columnNumber: 140
+                                                                }, this)
+                                                            ]
+                                                        }, void 0, true, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 786,
                                                             columnNumber: 37
@@ -3548,7 +3579,7 @@ function GestorFinanceiro() {
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                            className: "text-[10px] font-bold text-neutral-500 uppercase",
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                             children: [
                                                                 "Data de ",
                                                                 formData.type_trans === 'receita' ? 'Recebimento' : 'Pagamento'
@@ -3560,7 +3591,7 @@ function GestorFinanceiro() {
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                             type: "date",
-                                                            className: "w-full border p-2 rounded text-sm mt-1",
+                                                            className: "w-full border p-2 rounded text-sm",
                                                             defaultValue: formData.nf_received_date,
                                                             onChange: (e)=>setFormData({
                                                                     ...formData,
@@ -3569,7 +3600,7 @@ function GestorFinanceiro() {
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 788,
-                                                            columnNumber: 187
+                                                            columnNumber: 198
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                             className: "text-[9px] text-neutral-400 mt-1",
@@ -3581,7 +3612,7 @@ function GestorFinanceiro() {
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 788,
-                                                            columnNumber: 379
+                                                            columnNumber: 385
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
@@ -3601,7 +3632,7 @@ function GestorFinanceiro() {
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                            className: "text-xs font-bold text-neutral-500 uppercase",
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                             children: "Entidade (Favorecido)"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
@@ -3609,7 +3640,7 @@ function GestorFinanceiro() {
                                                             columnNumber: 74
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
-                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]",
+                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]",
                                                             defaultValue: formData.supplier_id,
                                                             onChange: (e)=>setFormData({
                                                                     ...formData,
@@ -3622,7 +3653,7 @@ function GestorFinanceiro() {
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/page.js",
                                                                     lineNumber: 791,
-                                                                    columnNumber: 408
+                                                                    columnNumber: 418
                                                                 }, this),
                                                                 suppliers.map((s)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
                                                                         value: s.id,
@@ -3630,13 +3661,13 @@ function GestorFinanceiro() {
                                                                     }, s.id, false, {
                                                                         fileName: "[project]/app/page.js",
                                                                         lineNumber: 791,
-                                                                        columnNumber: 466
+                                                                        columnNumber: 476
                                                                     }, this))
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 791,
-                                                            columnNumber: 167
+                                                            columnNumber: 182
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
@@ -3647,15 +3678,15 @@ function GestorFinanceiro() {
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                            className: "text-xs font-bold text-neutral-500 uppercase",
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                             children: "Plano de Contas"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 791,
-                                                            columnNumber: 537
+                                                            columnNumber: 547
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
-                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]",
+                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]",
                                                             defaultValue: formData.category_id,
                                                             onChange: (e)=>setFormData({
                                                                     ...formData,
@@ -3668,7 +3699,7 @@ function GestorFinanceiro() {
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/page.js",
                                                                     lineNumber: 791,
-                                                                    columnNumber: 865
+                                                                    columnNumber: 885
                                                                 }, this),
                                                                 categories.map((c)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
                                                                         value: c.id,
@@ -3676,19 +3707,19 @@ function GestorFinanceiro() {
                                                                     }, c.id, false, {
                                                                         fileName: "[project]/app/page.js",
                                                                         lineNumber: 791,
-                                                                        columnNumber: 924
+                                                                        columnNumber: 944
                                                                     }, this))
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 791,
-                                                            columnNumber: 624
+                                                            columnNumber: 649
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 791,
-                                                    columnNumber: 532
+                                                    columnNumber: 542
                                                 }, this)
                                             ]
                                         }, void 0, true, {
@@ -3699,15 +3730,15 @@ function GestorFinanceiro() {
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                    className: "text-xs font-bold text-neutral-500 uppercase",
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                     children: "Status Inicial"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 791,
-                                                    columnNumber: 1001
+                                                    columnNumber: 1021
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                    className: "flex gap-2 mt-2",
+                                                    className: "flex gap-2",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                             onClick: ()=>setFormData({
@@ -3719,7 +3750,7 @@ function GestorFinanceiro() {
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 791,
-                                                            columnNumber: 1120
+                                                            columnNumber: 1150
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                             onClick: ()=>setFormData({
@@ -3731,19 +3762,19 @@ function GestorFinanceiro() {
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 791,
-                                                            columnNumber: 1436
+                                                            columnNumber: 1466
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 791,
-                                                    columnNumber: 1087
+                                                    columnNumber: 1122
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/page.js",
                                             lineNumber: 791,
-                                            columnNumber: 996
+                                            columnNumber: 1016
                                         }, this)
                                     ]
                                 }, void 0, true),
@@ -3752,15 +3783,16 @@ function GestorFinanceiro() {
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                    className: "text-xs font-bold text-neutral-500 uppercase",
-                                                    children: "Descrição (Ex: Aluguel)"
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                    children: "Descrição"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 795,
                                                     columnNumber: 32
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                    className: "w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410]",
+                                                    placeholder: "Ex: Aluguel",
+                                                    className: "w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410]",
                                                     defaultValue: formData.description,
                                                     onChange: (e)=>setFormData({
                                                             ...formData,
@@ -3769,7 +3801,7 @@ function GestorFinanceiro() {
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 795,
-                                                    columnNumber: 127
+                                                    columnNumber: 128
                                                 }, this)
                                             ]
                                         }, void 0, true, {
@@ -3783,17 +3815,17 @@ function GestorFinanceiro() {
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                            className: "text-xs font-bold text-neutral-500 uppercase",
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                             children: "Valor Fixo"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 795,
-                                                            columnNumber: 411
+                                                            columnNumber: 433
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                             type: "number",
                                                             step: "0.01",
-                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410]",
+                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410]",
                                                             defaultValue: formData.amount,
                                                             onChange: (e)=>setFormData({
                                                                     ...formData,
@@ -3802,30 +3834,30 @@ function GestorFinanceiro() {
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 795,
-                                                            columnNumber: 493
+                                                            columnNumber: 530
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 795,
-                                                    columnNumber: 406
+                                                    columnNumber: 428
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                            className: "text-xs font-bold text-neutral-500 uppercase",
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                             children: "Dia de Vencimento"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 795,
-                                                            columnNumber: 753
+                                                            columnNumber: 785
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                             type: "number",
                                                             min: "1",
                                                             max: "31",
                                                             placeholder: "Dia (1-31)",
-                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410]",
+                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410]",
                                                             defaultValue: formData.day_of_month,
                                                             onChange: (e)=>setFormData({
                                                                     ...formData,
@@ -3834,19 +3866,19 @@ function GestorFinanceiro() {
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 795,
-                                                            columnNumber: 842
+                                                            columnNumber: 889
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 795,
-                                                    columnNumber: 748
+                                                    columnNumber: 780
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/page.js",
                                             lineNumber: 795,
-                                            columnNumber: 366
+                                            columnNumber: 388
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             className: "grid grid-cols-2 gap-4",
@@ -3854,15 +3886,15 @@ function GestorFinanceiro() {
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                            className: "text-xs font-bold text-neutral-500 uppercase",
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                             children: "Entidade"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 795,
-                                                            columnNumber: 1190
+                                                            columnNumber: 1232
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
-                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white",
+                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 bg-white",
                                                             defaultValue: formData.supplier_id,
                                                             onChange: (e)=>setFormData({
                                                                     ...formData,
@@ -3875,7 +3907,7 @@ function GestorFinanceiro() {
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/page.js",
                                                                     lineNumber: 795,
-                                                                    columnNumber: 1464
+                                                                    columnNumber: 1516
                                                                 }, this),
                                                                 suppliers.map((s)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
                                                                         value: s.id,
@@ -3883,32 +3915,32 @@ function GestorFinanceiro() {
                                                                     }, s.id, false, {
                                                                         fileName: "[project]/app/page.js",
                                                                         lineNumber: 795,
-                                                                        columnNumber: 1522
+                                                                        columnNumber: 1574
                                                                     }, this))
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 795,
-                                                            columnNumber: 1270
+                                                            columnNumber: 1327
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 795,
-                                                    columnNumber: 1185
+                                                    columnNumber: 1227
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                            className: "text-xs font-bold text-neutral-500 uppercase",
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                             children: "Plano de Contas"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 795,
-                                                            columnNumber: 1593
+                                                            columnNumber: 1645
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
-                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white",
+                                                            className: "w-full border border-neutral-200 rounded-lg p-2.5 bg-white",
                                                             defaultValue: formData.category_id,
                                                             onChange: (e)=>setFormData({
                                                                     ...formData,
@@ -3921,7 +3953,7 @@ function GestorFinanceiro() {
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/page.js",
                                                                     lineNumber: 795,
-                                                                    columnNumber: 1874
+                                                                    columnNumber: 1936
                                                                 }, this),
                                                                 categories.map((c)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
                                                                         value: c.id,
@@ -3929,52 +3961,84 @@ function GestorFinanceiro() {
                                                                     }, c.id, false, {
                                                                         fileName: "[project]/app/page.js",
                                                                         lineNumber: 795,
-                                                                        columnNumber: 1933
+                                                                        columnNumber: 1995
                                                                     }, this))
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 795,
-                                                            columnNumber: 1680
+                                                            columnNumber: 1747
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 795,
-                                                    columnNumber: 1588
+                                                    columnNumber: 1640
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/page.js",
                                             lineNumber: 795,
-                                            columnNumber: 1145
+                                            columnNumber: 1187
                                         }, this)
                                     ]
                                 }, void 0, true),
                                 modalType === 'sale' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
                                     children: [
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                            placeholder: "Nome do Cliente",
-                                            className: "w-full border p-2 rounded",
-                                            value: saleForm.client_name,
-                                            onChange: (e)=>setSaleForm({
-                                                    ...saleForm,
-                                                    client_name: e.target.value
-                                                })
-                                        }, void 0, false, {
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                    children: "Nome do Cliente"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 799,
+                                                    columnNumber: 34
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                    placeholder: "Nome Completo",
+                                                    className: "w-full border p-2 rounded",
+                                                    value: saleForm.client_name,
+                                                    onChange: (e)=>setSaleForm({
+                                                            ...saleForm,
+                                                            client_name: e.target.value
+                                                        })
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 799,
+                                                    columnNumber: 136
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
                                             fileName: "[project]/app/page.js",
                                             lineNumber: 799,
                                             columnNumber: 29
                                         }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                            placeholder: "Imóvel (Ex: Ap 101)",
-                                            className: "w-full border p-2 rounded",
-                                            value: saleForm.property_info,
-                                            onChange: (e)=>setSaleForm({
-                                                    ...saleForm,
-                                                    property_info: e.target.value
-                                                })
-                                        }, void 0, false, {
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                    children: "Imóvel"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 800,
+                                                    columnNumber: 34
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                    placeholder: "Ex: Ap 101",
+                                                    className: "w-full border p-2 rounded",
+                                                    value: saleForm.property_info,
+                                                    onChange: (e)=>setSaleForm({
+                                                            ...saleForm,
+                                                            property_info: e.target.value
+                                                        })
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 800,
+                                                    columnNumber: 127
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
                                             fileName: "[project]/app/page.js",
                                             lineNumber: 800,
                                             columnNumber: 29
@@ -3982,30 +4046,62 @@ function GestorFinanceiro() {
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             className: "grid grid-cols-2 gap-2",
                                             children: [
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                    placeholder: "Valor Venda",
-                                                    type: "number",
-                                                    className: "w-full border p-2 rounded",
-                                                    value: saleForm.total_value,
-                                                    onChange: (e)=>setSaleForm({
-                                                            ...saleForm,
-                                                            total_value: e.target.value
-                                                        })
-                                                }, void 0, false, {
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                            children: "Valor Venda"
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/page.js",
+                                                            lineNumber: 802,
+                                                            columnNumber: 38
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                            placeholder: "R$ 0,00",
+                                                            type: "number",
+                                                            className: "w-full border p-2 rounded",
+                                                            value: saleForm.total_value,
+                                                            onChange: (e)=>setSaleForm({
+                                                                    ...saleForm,
+                                                                    total_value: e.target.value
+                                                                })
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/page.js",
+                                                            lineNumber: 802,
+                                                            columnNumber: 136
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 802,
                                                     columnNumber: 33
                                                 }, this),
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                    placeholder: "% Honorários",
-                                                    type: "number",
-                                                    className: "w-full border p-2 rounded",
-                                                    value: saleForm.agency_fee_percent,
-                                                    onChange: (e)=>setSaleForm({
-                                                            ...saleForm,
-                                                            agency_fee_percent: e.target.value
-                                                        })
-                                                }, void 0, false, {
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                            children: "% Honorários"
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/page.js",
+                                                            lineNumber: 803,
+                                                            columnNumber: 38
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                            placeholder: "%",
+                                                            type: "number",
+                                                            className: "w-full border p-2 rounded",
+                                                            value: saleForm.agency_fee_percent,
+                                                            onChange: (e)=>setSaleForm({
+                                                                    ...saleForm,
+                                                                    agency_fee_percent: e.target.value
+                                                                })
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/page.js",
+                                                            lineNumber: 803,
+                                                            columnNumber: 137
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 803,
                                                     columnNumber: 33
@@ -4016,44 +4112,76 @@ function GestorFinanceiro() {
                                             lineNumber: 801,
                                             columnNumber: 29
                                         }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                            placeholder: "% Comissão Corretor (sobre honorários)",
-                                            type: "number",
-                                            className: "w-full border p-2 rounded",
-                                            value: saleForm.broker_commission_percent,
-                                            onChange: (e)=>setSaleForm({
-                                                    ...saleForm,
-                                                    broker_commission_percent: e.target.value
-                                                })
-                                        }, void 0, false, {
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                    children: "% Comissão Corretor (sobre honorários)"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 805,
+                                                    columnNumber: 34
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                    placeholder: "%",
+                                                    type: "number",
+                                                    className: "w-full border p-2 rounded",
+                                                    value: saleForm.broker_commission_percent,
+                                                    onChange: (e)=>setSaleForm({
+                                                            ...saleForm,
+                                                            broker_commission_percent: e.target.value
+                                                        })
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 805,
+                                                    columnNumber: 159
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
                                             fileName: "[project]/app/page.js",
                                             lineNumber: 805,
                                             columnNumber: 29
                                         }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
-                                            className: "w-full border p-2 rounded bg-white",
-                                            value: saleForm.broker_id,
-                                            onChange: (e)=>setSaleForm({
-                                                    ...saleForm,
-                                                    broker_id: e.target.value
-                                                }),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
-                                                    value: "",
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
                                                     children: "Corretor Responsável"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 806,
-                                                    columnNumber: 183
+                                                    columnNumber: 34
                                                 }, this),
-                                                suppliers.filter((s)=>s.type === 'Parceiro' || s.type === 'Corretor').map((s)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
-                                                        value: s.id,
-                                                        children: s.name
-                                                    }, s.id, false, {
-                                                        fileName: "[project]/app/page.js",
-                                                        lineNumber: 806,
-                                                        columnNumber: 309
-                                                    }, this))
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
+                                                    className: "w-full border p-2 rounded bg-white",
+                                                    value: saleForm.broker_id,
+                                                    onChange: (e)=>setSaleForm({
+                                                            ...saleForm,
+                                                            broker_id: e.target.value
+                                                        }),
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
+                                                            value: "",
+                                                            children: "Selecione..."
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/page.js",
+                                                            lineNumber: 806,
+                                                            columnNumber: 295
+                                                        }, this),
+                                                        suppliers.filter((s)=>s.type === 'Parceiro' || s.type === 'Corretor').map((s)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
+                                                                value: s.id,
+                                                                children: s.name
+                                                            }, s.id, false, {
+                                                                fileName: "[project]/app/page.js",
+                                                                lineNumber: 806,
+                                                                columnNumber: 413
+                                                            }, this))
+                                                    ]
+                                                }, void 0, true, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 806,
+                                                    columnNumber: 141
+                                                }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/page.js",
@@ -4168,16 +4296,32 @@ function GestorFinanceiro() {
                                             lineNumber: 812,
                                             columnNumber: 29
                                         }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                            placeholder: "Valor Recebido (Bruto)",
-                                            type: "number",
-                                            className: "w-full border p-2 rounded",
-                                            value: installmentForm.amount,
-                                            onChange: (e)=>setInstallmentForm({
-                                                    ...installmentForm,
-                                                    amount: e.target.value
-                                                })
-                                        }, void 0, false, {
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                    children: "Valor Recebido (Bruto)"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 824,
+                                                    columnNumber: 34
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                    placeholder: "R$ 0,00",
+                                                    type: "number",
+                                                    className: "w-full border p-2 rounded",
+                                                    value: installmentForm.amount,
+                                                    onChange: (e)=>setInstallmentForm({
+                                                            ...installmentForm,
+                                                            amount: e.target.value
+                                                        })
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 824,
+                                                    columnNumber: 143
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
                                             fileName: "[project]/app/page.js",
                                             lineNumber: 824,
                                             columnNumber: 29
@@ -4185,29 +4329,61 @@ function GestorFinanceiro() {
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             className: "grid grid-cols-2 gap-2",
                                             children: [
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                    placeholder: "Imposto (%) Ex: 10.68",
-                                                    type: "number",
-                                                    className: "w-full border p-2 rounded",
-                                                    value: installmentForm.tax_rate,
-                                                    onChange: (e)=>setInstallmentForm({
-                                                            ...installmentForm,
-                                                            tax_rate: e.target.value
-                                                        })
-                                                }, void 0, false, {
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                            children: "Imposto (%)"
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/page.js",
+                                                            lineNumber: 826,
+                                                            columnNumber: 38
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                            placeholder: "Ex: 10.68",
+                                                            type: "number",
+                                                            className: "w-full border p-2 rounded",
+                                                            value: installmentForm.tax_rate,
+                                                            onChange: (e)=>setInstallmentForm({
+                                                                    ...installmentForm,
+                                                                    tax_rate: e.target.value
+                                                                })
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/page.js",
+                                                            lineNumber: 826,
+                                                            columnNumber: 136
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 826,
                                                     columnNumber: 33
                                                 }, this),
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                    type: "date",
-                                                    className: "w-full border p-2 rounded",
-                                                    value: installmentForm.date,
-                                                    onChange: (e)=>setInstallmentForm({
-                                                            ...installmentForm,
-                                                            date: e.target.value
-                                                        })
-                                                }, void 0, false, {
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                            className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                            children: "Data Recebimento"
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/page.js",
+                                                            lineNumber: 827,
+                                                            columnNumber: 38
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                            type: "date",
+                                                            className: "w-full border p-2 rounded",
+                                                            value: installmentForm.date,
+                                                            onChange: (e)=>setInstallmentForm({
+                                                                    ...installmentForm,
+                                                                    date: e.target.value
+                                                                })
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/page.js",
+                                                            lineNumber: 827,
+                                                            columnNumber: 141
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "[project]/app/page.js",
                                                     lineNumber: 827,
                                                     columnNumber: 33
@@ -4355,16 +4531,32 @@ function GestorFinanceiro() {
                                             lineNumber: 834,
                                             columnNumber: 29
                                         }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                            placeholder: "Valor Total do Bônus",
-                                            type: "number",
-                                            className: "w-full border p-2 rounded",
-                                            value: bonusForm.amount,
-                                            onChange: (e)=>setBonusForm({
-                                                    ...bonusForm,
-                                                    amount: e.target.value
-                                                })
-                                        }, void 0, false, {
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                    children: "Valor Total do Bônus"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 840,
+                                                    columnNumber: 34
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                    placeholder: "R$ 0,00",
+                                                    type: "number",
+                                                    className: "w-full border p-2 rounded",
+                                                    value: bonusForm.amount,
+                                                    onChange: (e)=>setBonusForm({
+                                                            ...bonusForm,
+                                                            amount: e.target.value
+                                                        })
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 840,
+                                                    columnNumber: 141
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
                                             fileName: "[project]/app/page.js",
                                             lineNumber: 840,
                                             columnNumber: 29
@@ -4375,7 +4567,7 @@ function GestorFinanceiro() {
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                            className: "text-[10px] uppercase font-bold text-neutral-500",
+                                                            className: "text-[10px] uppercase font-bold text-neutral-500 block mb-1",
                                                             children: "% Corretor"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
@@ -4393,7 +4585,7 @@ function GestorFinanceiro() {
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 842,
-                                                            columnNumber: 124
+                                                            columnNumber: 135
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
@@ -4404,7 +4596,7 @@ function GestorFinanceiro() {
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                            className: "text-[10px] uppercase font-bold text-neutral-500",
+                                                            className: "text-[10px] uppercase font-bold text-neutral-500 block mb-1",
                                                             children: "% Imposto (Imob)"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
@@ -4422,7 +4614,7 @@ function GestorFinanceiro() {
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/page.js",
                                                             lineNumber: 843,
-                                                            columnNumber: 130
+                                                            columnNumber: 141
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
@@ -4436,15 +4628,31 @@ function GestorFinanceiro() {
                                             lineNumber: 841,
                                             columnNumber: 29
                                         }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                            type: "date",
-                                            className: "w-full border p-2 rounded",
-                                            value: bonusForm.date,
-                                            onChange: (e)=>setBonusForm({
-                                                    ...bonusForm,
-                                                    date: e.target.value
-                                                })
-                                        }, void 0, false, {
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                    children: "Data"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 845,
+                                                    columnNumber: 34
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                    type: "date",
+                                                    className: "w-full border p-2 rounded",
+                                                    value: bonusForm.date,
+                                                    onChange: (e)=>setBonusForm({
+                                                            ...bonusForm,
+                                                            date: e.target.value
+                                                        })
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 845,
+                                                    columnNumber: 125
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
                                             fileName: "[project]/app/page.js",
                                             lineNumber: 845,
                                             columnNumber: 29
@@ -4453,28 +4661,60 @@ function GestorFinanceiro() {
                                 }, void 0, true),
                                 (modalType === 'supplier' || modalType === 'category') && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
                                     children: [
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                            placeholder: "Nome",
-                                            className: "w-full border p-2 rounded",
-                                            value: formData.name,
-                                            onChange: (e)=>setFormData({
-                                                    ...formData,
-                                                    name: e.target.value
-                                                })
-                                        }, void 0, false, {
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                    children: "Nome"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 850,
+                                                    columnNumber: 34
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                    placeholder: "Nome",
+                                                    className: "w-full border p-2 rounded",
+                                                    value: formData.name,
+                                                    onChange: (e)=>setFormData({
+                                                            ...formData,
+                                                            name: e.target.value
+                                                        })
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 850,
+                                                    columnNumber: 125
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
                                             fileName: "[project]/app/page.js",
                                             lineNumber: 850,
                                             columnNumber: 29
                                         }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                            placeholder: "Descrição/Tipo",
-                                            className: "w-full border p-2 rounded",
-                                            value: modalType === 'supplier' ? formData.type : formData.description,
-                                            onChange: (e)=>setFormData({
-                                                    ...formData,
-                                                    [modalType === 'supplier' ? 'type' : 'description']: e.target.value
-                                                })
-                                        }, void 0, false, {
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                    className: "text-[10px] font-bold text-neutral-500 uppercase block mb-1",
+                                                    children: "Descrição/Tipo"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 851,
+                                                    columnNumber: 34
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                    placeholder: "Descrição",
+                                                    className: "w-full border p-2 rounded",
+                                                    value: modalType === 'supplier' ? formData.type : formData.description,
+                                                    onChange: (e)=>setFormData({
+                                                            ...formData,
+                                                            [modalType === 'supplier' ? 'type' : 'description']: e.target.value
+                                                        })
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/page.js",
+                                                    lineNumber: 851,
+                                                    columnNumber: 135
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
                                             fileName: "[project]/app/page.js",
                                             lineNumber: 851,
                                             columnNumber: 29
@@ -4485,7 +4725,7 @@ function GestorFinanceiro() {
                         }, void 0, true, {
                             fileName: "[project]/app/page.js",
                             lineNumber: 760,
-                            columnNumber: 658
+                            columnNumber: 711
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "px-6 py-4 bg-neutral-50 border-t border-neutral-100 flex justify-end gap-3",
