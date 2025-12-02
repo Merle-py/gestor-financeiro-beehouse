@@ -13,7 +13,7 @@ import {
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LabelList 
 } from 'recharts'
 
 // --- COMPONENTES AUXILIARES ---
@@ -82,13 +82,6 @@ const KpiCard = ({ title, value, subtitle, icon: Icon, colorTheme }) => {
     )
 }
 
-const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return ( <div className="bg-white p-3 border border-neutral-100 shadow-xl rounded-lg"><p className="font-bold text-sm text-neutral-700">{label}</p><p className="text-sm font-medium text-[#f9b410]">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payload[0].value)}</p></div> );
-    }
-    return null;
-};
-
 // --- PÁGINA PRINCIPAL ---
 
 export default function GestorFinanceiro() {
@@ -121,14 +114,16 @@ export default function GestorFinanceiro() {
       const saleTrans = allTransactions.filter(t => t.sale_id === sale.id && t.status !== 'Cancelado');
       
       const totalHonorarios = sale.total_value * (sale.agency_fee_percent / 100);
-      const recebidoTotal = saleTrans.filter(t => t.type === 'receita' && t.status === 'Pago').reduce((acc, t) => acc + t.amount, 0);
+      const recebidoTotal = saleTrans.filter(t => t.type === 'receita' && t.status === 'Pago').reduce((acc, t) => acc + Number(t.amount), 0);
       const restanteReceber = totalHonorarios - recebidoTotal;
 
       const totalComissaoPrevista = totalHonorarios * (sale.broker_commission_percent / 100);
-      const comissaoPaga = saleTrans.filter(t => t.type === 'despesa' && t.description.includes('Comissão') && t.status === 'Pago').reduce((acc, t) => acc + t.amount, 0);
+      const comissaoPaga = saleTrans.filter(t => t.type === 'despesa' && t.description.includes('Comissão') && t.status === 'Pago').reduce((acc, t) => acc + Number(t.amount), 0);
       const restanteComissao = totalComissaoPrevista - comissaoPaga;
+      
+      const impostosPagos = saleTrans.filter(t => t.type === 'despesa' && t.description.includes('Imposto') && t.status === 'Pago').reduce((acc, t) => acc + Number(t.amount), 0);
 
-      return { totalHonorarios, recebidoTotal, restanteReceber, totalComissaoPrevista, comissaoPaga, restanteComissao };
+      return { totalHonorarios, recebidoTotal, restanteReceber, totalComissaoPrevista, comissaoPaga, restanteComissao, impostosPagos };
   };
 
   const getDaysText = (dateStr) => {
@@ -163,6 +158,7 @@ export default function GestorFinanceiro() {
   }
 
   const financialMetrics = useMemo(() => {
+      // CORREÇÃO: Forçar conversão para Number para evitar erros de soma de strings
       const data = transactions.filter(t => {
           if (t.status === 'Cancelado') return false; 
           if (filters.startDate && filters.endDate) {
@@ -171,12 +167,15 @@ export default function GestorFinanceiro() {
           }
           return true;
       });
-      const receitaBruta = data.filter(t => t.type === 'receita').reduce((acc, t) => acc + t.amount, 0);
-      const custosVariaveis = data.filter(t => t.type === 'despesa' && t.sale_id).reduce((acc, t) => acc + t.amount, 0);
-      const despesasFixas = data.filter(t => t.type === 'despesa' && !t.sale_id).reduce((acc, t) => acc + t.amount, 0);
+      
+      const receitaBruta = data.filter(t => t.type === 'receita').reduce((acc, t) => acc + Number(t.amount), 0);
+      const custosVariaveis = data.filter(t => t.type === 'despesa' && t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
+      const despesasFixas = data.filter(t => t.type === 'despesa' && !t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
+      
       const margemContribuicao = receitaBruta - custosVariaveis;
       const lucroLiquido = margemContribuicao - despesasFixas;
       const margemPercent = receitaBruta > 0 ? (lucroLiquido / receitaBruta) * 100 : 0;
+      
       return { receitaBruta, custosVariaveis, despesasFixas, margemContribuicao, lucroLiquido, margemPercent };
   }, [transactions, filters]);
 
@@ -234,6 +233,7 @@ export default function GestorFinanceiro() {
                 if (formData.due_date < today) finalStatus = 'Vencido'
                 else finalStatus = 'Aberto'
             }
+            // Usa type_trans selecionado no modal ou fallback para despesa
             const payload = { description: formData.description, amount: parseFloat(formData.amount), due_date: formData.due_date, supplier_id: formData.supplier_id || null, category_id: formData.category_id || null, status: finalStatus, type: formData.type_trans || 'despesa', nf_number: formData.nf_number || null, nf_issue_date: formData.nf_issue_date || null, nf_received_date: formData.nf_received_date || null }
             const { error } = editingItem ? await supabase.from('transactions').update(payload).eq('id', editingItem.id) : await supabase.from('transactions').insert([payload])
             if (error) throw error
@@ -303,8 +303,9 @@ export default function GestorFinanceiro() {
   function openModal(type, item = null) {
     setModalType(type); setEditingItem(item); 
     const today = new Date().toISOString().split('T')[0]
-    setFormData({ description: '', amount: '', due_date: today, day_of_month: '', supplier_id: '', category_id: '', status: 'Aberto', name: '', type: '', type_trans: 'despesa', nf_number: '', nf_issue_date: '', nf_received_date: '' })
-    if(type === 'transaction' && item) setFormData({...item})
+    // Definimos type_trans com base no item editado ou padrão despesa
+    setFormData({ description: '', amount: '', due_date: today, day_of_month: '', supplier_id: '', category_id: '', status: 'Aberto', name: '', type: '', type_trans: item?.type || 'despesa', nf_number: '', nf_issue_date: '', nf_received_date: '' })
+    if(type === 'transaction' && item) setFormData({...item, type_trans: item.type})
     if(type === 'sale') setSaleForm({ client_name: '', property_info: '', total_value: '', agency_fee_percent: '6', broker_commission_percent: '30', broker_id: '' })
     if(type === 'installment') setInstallmentForm({ amount: '', date: today, tax_rate: '' })
     if(type === 'bonus') setBonusForm({ amount: '', broker_percent: '100', tax_rate: '0', date: today })
@@ -315,8 +316,8 @@ export default function GestorFinanceiro() {
     const catTotals = {}, monthTotals = {}
     filteredTransactions.forEach(t => {
         if(t.type === 'receita' || t.status === 'Cancelado') return;
-        const cat = t.categories?.name || 'Outros'; catTotals[cat] = (catTotals[cat] || 0) + t.amount;
-        const m = format(parseISO(t.due_date), 'MMM', {locale: ptBR}); monthTotals[m] = (monthTotals[m] || 0) + t.amount;
+        const cat = t.categories?.name || 'Outros'; catTotals[cat] = (catTotals[cat] || 0) + Number(t.amount);
+        const m = format(parseISO(t.due_date), 'MMM', {locale: ptBR}); monthTotals[m] = (monthTotals[m] || 0) + Number(t.amount);
     })
     return { pie: Object.keys(catTotals).map(k => ({name: k, value: catTotals[k]})), bar: Object.keys(monthTotals).map(k => ({name: k, total: monthTotals[k]})) }
   }, [filteredTransactions])
@@ -362,7 +363,18 @@ export default function GestorFinanceiro() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-[500px]">
                             <h3 className="font-bold mb-6 flex items-center gap-2"><TrendingUp size={18} className="text-[#f9b410]" /> Fluxo Mensal</h3>
-                            <ResponsiveContainer width="100%" height="85%"><BarChart data={chartData.bar} margin={{top: 10, right: 30, left: 20, bottom: 0}}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="name" axisLine={false} tickLine={false} /><YAxis axisLine={false} tickLine={false} width={80} tickFormatter={(v)=>new Intl.NumberFormat('pt-BR',{notation:"compact"}).format(v)} /><Tooltip cursor={{fill: '#f8fafc'}} /><Bar dataKey="total" fill="#f9b410" radius={[6, 6, 0, 0]} barSize={50} /></BarChart></ResponsiveContainer>
+                            {/* CORREÇÃO: Margem top ajustada e LabelList adicionada */}
+                            <ResponsiveContainer width="100%" height="85%">
+                                <BarChart data={chartData.bar} margin={{top: 20, right: 30, left: 20, bottom: 0}}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                                    <YAxis axisLine={false} tickLine={false} width={80} tickFormatter={(v)=>new Intl.NumberFormat('pt-BR',{notation:"compact"}).format(v)} />
+                                    <Tooltip cursor={{fill: '#f8fafc'}} />
+                                    <Bar dataKey="total" fill="#f9b410" radius={[6, 6, 0, 0]} barSize={50}>
+                                        <LabelList dataKey="total" position="top" formatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(v)} style={{ fill: '#666', fontSize: '12px', fontWeight: 'bold' }} />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-[500px]">
                             <h3 className="font-bold mb-6 flex items-center gap-2"><Tag size={18} className="text-indigo-500"/> Por Categoria</h3>
@@ -442,19 +454,35 @@ export default function GestorFinanceiro() {
         <div className="fixed inset-0 bg-neutral-900/60 z-50 flex items-center justify-center backdrop-blur-sm p-4"><div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200"><div className="px-6 py-4 border-b border-neutral-100 flex justify-between items-center bg-neutral-50"><h3 className="font-bold text-lg text-neutral-800">{modalType === 'recurring' ? 'Conta Recorrente' : modalType === 'bonus' ? 'Lançar Bônus' : 'Novo Registro'}</h3><button onClick={() => setIsModalOpen(false)}><X size={20} className="text-neutral-400 hover:text-neutral-800 transition-colors"/></button></div><div className="p-6 space-y-4">
             {modalType === 'transaction' && (
                 <>
+                    {/* NOVO SELETOR DE TIPO (ENTRADA/SAÍDA) */}
+                    <div className="flex gap-2 mb-2 p-1 bg-neutral-100 rounded-lg">
+                        <button 
+                            onClick={() => setFormData({...formData, type_trans: 'despesa'})} 
+                            className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${formData.type_trans === 'despesa' ? 'bg-white text-red-600 shadow-sm border border-neutral-200' : 'text-neutral-400 hover:text-neutral-600'}`}
+                        >
+                            Saída / Despesa
+                        </button>
+                        <button 
+                            onClick={() => setFormData({...formData, type_trans: 'receita'})} 
+                            className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${formData.type_trans === 'receita' ? 'bg-white text-green-600 shadow-sm border border-neutral-200' : 'text-neutral-400 hover:text-neutral-600'}`}
+                        >
+                            Entrada / Receita
+                        </button>
+                    </div>
+
                     <div><label className="text-xs font-bold text-neutral-500 uppercase">Descrição</label><input className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410] focus:border-transparent transition-all" defaultValue={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} /></div>
                     <div className="grid grid-cols-2 gap-4"><div><label className="text-xs font-bold text-neutral-500 uppercase">Valor</label><input type="number" step="0.01" className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all" defaultValue={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} /></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Vencimento</label><input type="date" className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all" defaultValue={formData.due_date} onChange={e => setFormData({...formData, due_date: e.target.value})} /></div></div>
-                    {formData.type_trans === 'receita' && (
-                        <div className="bg-neutral-50 p-3 rounded-lg border border-neutral-200">
-                            <p className="text-[10px] font-bold text-neutral-500 uppercase mb-2 flex items-center gap-1"><FileText size={12}/> Dados da Nota Fiscal</p>
-                            <div className="grid grid-cols-2 gap-2 mb-2">
-                                <input placeholder="Número da NF" className="w-full border p-2 rounded text-sm" defaultValue={formData.nf_number} onChange={e=>setFormData({...formData, nf_number:e.target.value})} />
-                                <input type="date" title="Data Emissão" className="w-full border p-2 rounded text-sm" defaultValue={formData.nf_issue_date} onChange={e=>setFormData({...formData, nf_issue_date:e.target.value})} />
-                            </div>
-                            <div><label className="text-[10px] font-bold text-neutral-500 uppercase">Data de Recebimento (Baixa)</label><input type="date" className="w-full border p-2 rounded text-sm mt-1" defaultValue={formData.nf_received_date} onChange={e=>setFormData({...formData, nf_received_date:e.target.value})} /><p className="text-[9px] text-neutral-400 mt-1">*Preencher isso marca a conta como Paga.</p></div>
+                    {/* Campos de NF apenas se for despesa ou se desejar em receita, mantido conforme lógica original para simplificar, mas disponível para ambos se necessário. Adaptado para mostrar sempre que útil */}
+                    <div className="bg-neutral-50 p-3 rounded-lg border border-neutral-200">
+                        <p className="text-[10px] font-bold text-neutral-500 uppercase mb-2 flex items-center gap-1"><FileText size={12}/> Dados da Nota Fiscal / Recibo</p>
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                            <input placeholder="Número da NF" className="w-full border p-2 rounded text-sm" defaultValue={formData.nf_number} onChange={e=>setFormData({...formData, nf_number:e.target.value})} />
+                            <input type="date" title="Data Emissão" className="w-full border p-2 rounded text-sm" defaultValue={formData.nf_issue_date} onChange={e=>setFormData({...formData, nf_issue_date:e.target.value})} />
                         </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-4"><div><label className="text-xs font-bold text-neutral-500 uppercase">Fornecedor</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.supplier_id} onChange={e => setFormData({...formData, supplier_id: e.target.value})}><option value="">Selecione...</option>{suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Categoria</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}><option value="">Selecione...</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Status Inicial</label><div className="flex gap-2 mt-2"><button onClick={() => setFormData({...formData, status: 'Aberto'})} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Aberto' ? 'bg-neutral-800 text-white border-neutral-800 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>Aberto</button><button onClick={() => setFormData({...formData, status: 'Pago'})} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Pago' ? 'bg-emerald-500 text-white border-emerald-500 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>Pago</button></div></div>
+                        <div><label className="text-[10px] font-bold text-neutral-500 uppercase">Data de {formData.type_trans === 'receita' ? 'Recebimento' : 'Pagamento'}</label><input type="date" className="w-full border p-2 rounded text-sm mt-1" defaultValue={formData.nf_received_date} onChange={e=>setFormData({...formData, nf_received_date:e.target.value})} /><p className="text-[9px] text-neutral-400 mt-1">*Preencher isso marca a conta como {formData.type_trans === 'receita' ? 'Paga/Recebida' : 'Paga'}.</p></div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4"><div><label className="text-xs font-bold text-neutral-500 uppercase">Fornecedor / Entidade</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.supplier_id} onChange={e => setFormData({...formData, supplier_id: e.target.value})}><option value="">Selecione...</option>{suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Categoria</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}><option value="">Selecione...</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Status Inicial</label><div className="flex gap-2 mt-2"><button onClick={() => setFormData({...formData, status: 'Aberto'})} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Aberto' ? 'bg-neutral-800 text-white border-neutral-800 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>Aberto</button><button onClick={() => setFormData({...formData, status: 'Pago'})} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Pago' ? 'bg-emerald-500 text-white border-emerald-500 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>{formData.type_trans === 'receita' ? 'Recebido' : 'Pago'}</button></div></div>
                 </>
             )}
             {modalType === 'recurring' && (
