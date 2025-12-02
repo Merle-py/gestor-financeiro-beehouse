@@ -7,14 +7,14 @@ import {
     ArrowUpRight, ArrowDownRight, AlertTriangle, Calendar, X,
     List, Kanban as KanbanIcon, Check, Menu, ChevronLeft, TrendingUp, DollarSign,
     Repeat, RefreshCw, Briefcase, Wallet, FileText, AlertCircle, Ban, Gift, Calculator, Lock, PieChart as PieIcon,
-    Building2, FolderOpen
+    Building2, FolderOpen, TrendingDown, Activity
 } from 'lucide-react'
 import {
     format, isWithinInterval, parseISO, isValid, differenceInCalendarDays, startOfDay, setDate, lastDayOfMonth, isSameDay, isBefore
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LabelList
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LabelList, ComposedChart, Line
 } from 'recharts'
 
 // --- COMPONENTES AUXILIARES ---
@@ -74,7 +74,7 @@ const KpiCard = ({ title, value, subtitle, icon: Icon, colorTheme }) => {
     }
     const theme = themes[colorTheme] || themes.primary;
     return (
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-200 flex-1 min-w-[240px]">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-200 flex-1 min-w-[200px]">
             <div className="flex justify-between items-start">
                 <div><p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-1">{title}</p><h3 className="text-2xl font-extrabold tracking-tight text-black">{value}</h3>{subtitle && <p className="text-xs font-medium mt-1 opacity-70" dangerouslySetInnerHTML={{ __html: subtitle }}></p>}</div>
                 <div className={`p-3 rounded-xl ${theme} ${colorTheme === 'dark' ? 'bg-neutral-800' : ''}`}><Icon size={22} strokeWidth={2.5} /></div>
@@ -166,27 +166,6 @@ export default function GestorFinanceiro() {
         try { await fetch('/api/cron'); await fetchAllData(); alert('Sincronizado!'); } catch (error) { alert('Erro.'); } finally { setSyncing(false) }
     }
 
-    const financialMetrics = useMemo(() => {
-        const data = transactions.filter(t => {
-            if (t.status === 'Cancelado') return false;
-            if (filters.startDate && filters.endDate) {
-                const date = parseISO(t.due_date)
-                return isValid(date) && isWithinInterval(date, { start: parseISO(filters.startDate), end: parseISO(filters.endDate) })
-            }
-            return true;
-        });
-
-        const receitaBruta = data.filter(t => t.type === 'receita').reduce((acc, t) => acc + Number(t.amount), 0);
-        const custosVariaveis = data.filter(t => t.type === 'despesa' && t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
-        const despesasFixas = data.filter(t => t.type === 'despesa' && !t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
-
-        const margemContribuicao = receitaBruta - custosVariaveis;
-        const lucroLiquido = margemContribuicao - despesasFixas;
-        const margemPercent = receitaBruta > 0 ? (lucroLiquido / receitaBruta) * 100 : 0;
-
-        return { receitaBruta, custosVariaveis, despesasFixas, margemContribuicao, lucroLiquido, margemPercent };
-    }, [transactions, filters]);
-
     const filteredTransactions = useMemo(() => {
         return transactions.filter(t => {
             const matchesSearch = t.description?.toLowerCase().includes(filters.search.toLowerCase()) || t.suppliers?.name?.toLowerCase().includes(filters.search.toLowerCase()) || t.nf_number?.includes(filters.search)
@@ -201,6 +180,63 @@ export default function GestorFinanceiro() {
             return matchesSearch && matchesStatus && matchesCategory && matchesSupplier && matchesDate
         })
     }, [transactions, filters])
+
+    const financialMetrics = useMemo(() => {
+        const data = filteredTransactions.filter(t => t.status !== 'Cancelado');
+
+        const receitaBruta = data.filter(t => t.type === 'receita').reduce((acc, t) => acc + Number(t.amount), 0);
+
+        // Custos variáveis: Despesas vinculadas a uma venda (comissões, impostos de nota)
+        const custosVariaveis = data.filter(t => t.type === 'despesa' && t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
+
+        // Despesas fixas: Despesas não vinculadas a vendas (operacionais)
+        const despesasFixas = data.filter(t => t.type === 'despesa' && !t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
+
+        const margemContribuicao = receitaBruta - custosVariaveis;
+        const lucroLiquido = margemContribuicao - despesasFixas;
+        const margemPercent = receitaBruta > 0 ? (lucroLiquido / receitaBruta) * 100 : 0;
+        const margemContribuicaoPercent = receitaBruta > 0 ? (margemContribuicao / receitaBruta) * 100 : 0;
+
+        return { receitaBruta, custosVariaveis, despesasFixas, margemContribuicao, lucroLiquido, margemPercent, margemContribuicaoPercent };
+    }, [filteredTransactions]);
+
+    const chartData = useMemo(() => {
+        const catTotals = {}, monthTotals = {}
+        const fluxoCaixa = {}; // { 'Jan/24': { receita: 0, despesa: 0, saldo: 0, name: 'Jan/24', sortDate: timestamp } }
+
+        filteredTransactions.forEach(t => {
+            if (t.status === 'Cancelado') return;
+
+            // Pie Chart Data (Expenses by Category)
+            if (t.type === 'despesa') {
+                const cat = t.categories?.name || 'Outros';
+                catTotals[cat] = (catTotals[cat] || 0) + Number(t.amount);
+            }
+
+            // Cash Flow Data (Income vs Expense)
+            const date = parseISO(t.due_date);
+            if (isValid(date)) {
+                const mKey = format(date, 'MMM/yy', { locale: ptBR });
+                if (!fluxoCaixa[mKey]) fluxoCaixa[mKey] = { name: mKey, receita: 0, despesa: 0, saldo: 0, sortDate: startOfDay(date).getTime() };
+
+                if (t.type === 'receita') {
+                    fluxoCaixa[mKey].receita += Number(t.amount);
+                    fluxoCaixa[mKey].saldo += Number(t.amount);
+                } else {
+                    fluxoCaixa[mKey].despesa += Number(t.amount);
+                    fluxoCaixa[mKey].saldo -= Number(t.amount);
+                }
+            }
+        })
+
+        // Sort Monthly Data
+        const sortedFluxo = Object.values(fluxoCaixa).sort((a, b) => a.sortDate - b.sortDate);
+
+        return {
+            pie: Object.keys(catTotals).map(k => ({ name: k, value: catTotals[k] })).sort((a, b) => b.value - a.value),
+            flow: sortedFluxo
+        }
+    }, [filteredTransactions])
 
     const filteredRecurring = useMemo(() => {
         return recurringExpenses.filter(r => {
@@ -305,7 +341,6 @@ export default function GestorFinanceiro() {
         } catch (e) { alert(e.message) } finally { setLoading(false) }
     }
 
-    // --- FUNÇÃO ATUALIZADA COM CONFIRMAÇÃO ---
     async function updateStatus(id, newStatus) {
         if (newStatus === 'Cancelado') {
             if (!confirm('ATENÇÃO: Deseja realmente CANCELAR este lançamento? Ele será removido dos cálculos financeiros, mas permanecerá no histórico.')) return;
@@ -335,17 +370,7 @@ export default function GestorFinanceiro() {
         setIsModalOpen(true)
     }
 
-    const chartData = useMemo(() => {
-        const catTotals = {}, monthTotals = {}
-        filteredTransactions.forEach(t => {
-            if (t.type === 'receita' || t.status === 'Cancelado') return;
-            const cat = t.categories?.name || 'Outros'; catTotals[cat] = (catTotals[cat] || 0) + Number(t.amount);
-            const m = format(parseISO(t.due_date), 'MMM', { locale: ptBR }); monthTotals[m] = (monthTotals[m] || 0) + Number(t.amount);
-        })
-        return { pie: Object.keys(catTotals).map(k => ({ name: k, value: catTotals[k] })), bar: Object.keys(monthTotals).map(k => ({ name: k, total: monthTotals[k] })) }
-    }, [filteredTransactions])
-
-    const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
+    const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#e11d48', '#84cc16'];
 
     return (
         <div className="flex h-screen overflow-hidden bg-[#f8fafc] text-neutral-800 font-sans">
@@ -383,31 +408,81 @@ export default function GestorFinanceiro() {
                     {activeTab === 'dashboard' && (
                         <div className="w-full max-w-[98%] mx-auto space-y-6">
                             <FilterBar filters={filters} setFilters={setFilters} categories={categories} suppliers={suppliers} dateResetKey={dateResetKey} setDateResetKey={setDateResetKey} />
+
+                            {/* KPI CARDS */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                                 <KpiCard title="Receita Bruta" icon={ArrowUpRight} colorTheme="primary" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.receitaBruta)} />
-                                <KpiCard title="Custos Variáveis" subtitle="Comissões e Impostos" icon={Tag} colorTheme="warning" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.custosVariaveis)} />
-                                <KpiCard title="Margem Contrib." subtitle={`${financialMetrics.margemPercent.toFixed(1)}% da Receita`} icon={PieIcon} colorTheme="success" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.margemContribuicao)} />
+                                <KpiCard title="Custos Variáveis" subtitle="Impostos & Comissões" icon={Tag} colorTheme="warning" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.custosVariaveis)} />
+                                <KpiCard title="Margem Contrib." subtitle={`${financialMetrics.margemContribuicaoPercent.toFixed(1)}% da Receita`} icon={Activity} colorTheme="success" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.margemContribuicao)} />
                                 <KpiCard title="Despesas Fixas" subtitle="Custo Operacional" icon={ArrowDownRight} colorTheme="danger" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasFixas)} />
-                                <KpiCard title="Lucro Líquido" icon={DollarSign} colorTheme="dark" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.lucroLiquido)} />
+                                <KpiCard title="Lucro Líquido" subtitle={`${financialMetrics.margemPercent.toFixed(1)}% de Lucratividade`} icon={DollarSign} colorTheme="dark" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.lucroLiquido)} />
                             </div>
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-[500px]">
-                                    <h3 className="font-bold mb-6 flex items-center gap-2"><TrendingUp size={18} className="text-[#f9b410]" /> Fluxo Mensal</h3>
+
+                            {/* DRE E FLUXO DE CAIXA COMPLETO */}
+                            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                                {/* DRE CARD */}
+                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 flex flex-col">
+                                    <h3 className="font-bold mb-6 flex items-center gap-2 text-neutral-800"><FileText size={18} className="text-[#f9b410]" /> Demonstrativo (DRE Gerencial)</h3>
+                                    <div className="flex-1 space-y-4 text-sm">
+                                        <div className="flex justify-between items-center p-2 rounded bg-neutral-50 border border-neutral-100">
+                                            <span className="font-bold text-neutral-600">(+) Receita Operacional Bruta</span>
+                                            <span className="font-bold text-neutral-900">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.receitaBruta)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center px-2 text-red-600">
+                                            <span>(-) Custos Variáveis (Impostos/Comissões)</span>
+                                            <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.custosVariaveis)}</span>
+                                        </div>
+                                        <div className="border-t border-dashed border-neutral-200 my-2"></div>
+                                        <div className="flex justify-between items-center px-2">
+                                            <span className="font-bold text-blue-600">(=) Margem de Contribuição</span>
+                                            <span className="font-bold text-blue-600">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.margemContribuicao)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center px-2 text-red-600">
+                                            <span>(-) Despesas Operacionais (Fixas)</span>
+                                            <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasFixas)}</span>
+                                        </div>
+                                        <div className="border-t border-neutral-800 my-2"></div>
+                                        <div className="flex justify-between items-center p-3 rounded bg-neutral-900 text-white shadow-lg">
+                                            <span className="font-bold text-sm">(=) Resultado Líquido (Lucro/Prejuízo)</span>
+                                            <span className={`font-bold text-lg ${financialMetrics.lucroLiquido >= 0 ? 'text-[#f9b410]' : 'text-rose-400'}`}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.lucroLiquido)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* CHART FLUXO DE CAIXA COMPLETO */}
+                                <div className="xl:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-[500px]">
+                                    <h3 className="font-bold mb-6 flex items-center gap-2"><TrendingUp size={18} className="text-[#f9b410]" /> Fluxo de Caixa (Entradas vs Saídas)</h3>
                                     <ResponsiveContainer width="100%" height="85%">
-                                        <BarChart data={chartData.bar} margin={{ top: 20, right: 30, left: 20, bottom: 0 }}>
+                                        <ComposedChart data={chartData.flow} margin={{ top: 20, right: 30, left: 20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <XAxis dataKey="name" axisLine={false} tickLine={false} />
                                             <YAxis axisLine={false} tickLine={false} width={80} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(v)} />
-                                            <Tooltip cursor={{ fill: '#f8fafc' }} />
-                                            <Bar dataKey="total" fill="#f9b410" radius={[6, 6, 0, 0]} barSize={50} isAnimationActive={false}>
-                                                <LabelList dataKey="total" position="top" formatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(v)} style={{ fill: '#666', fontSize: '12px', fontWeight: 'bold' }} />
-                                            </Bar>
-                                        </BarChart>
+                                            <Tooltip
+                                                cursor={{ fill: '#f8fafc' }}
+                                                formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+                                            />
+                                            <Legend verticalAlign="top" height={36} />
+                                            <Bar dataKey="receita" name="Receitas" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
+                                            <Bar dataKey="despesa" name="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={20} />
+                                            <Line type="monotone" dataKey="saldo" name="Saldo Líquido" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} />
+                                        </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-[500px]">
-                                    <h3 className="font-bold mb-6 flex items-center gap-2"><Tag size={18} className="text-indigo-500" /> Por Plano de Contas</h3>
-                                    <ResponsiveContainer width="100%" height="85%"><PieChart><Pie data={chartData.pie} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={5} dataKey="value">{chartData.pie.map((e, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />)}</Pie><Tooltip /><Legend /></PieChart></ResponsiveContainer>
+                            </div>
+
+                            {/* GRÁFICO DE CATEGORIAS (MANTIDO) */}
+                            <div className="grid grid-cols-1">
+                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-[400px]">
+                                    <h3 className="font-bold mb-6 flex items-center gap-2"><FolderOpen size={18} className="text-indigo-500" /> Despesas por Plano de Contas</h3>
+                                    <ResponsiveContainer width="100%" height="85%">
+                                        <PieChart>
+                                            <Pie data={chartData.pie} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={2} dataKey="value">
+                                                {chartData.pie.map((e, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />)}
+                                            </Pie>
+                                            <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} />
+                                            <Legend layout="vertical" verticalAlign="middle" align="right" />
+                                        </PieChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
                         </div>
@@ -463,7 +538,6 @@ export default function GestorFinanceiro() {
                         </div>
                     )}
 
-                    {/* NOVOS LEIAUTES PARA AS ABAS DE CONFIGURAÇÃO */}
                     {(activeTab === 'recorrencias' || activeTab === 'fornecedores' || activeTab === 'categorias') && (
                         <div className="w-full max-w-[98%] mx-auto h-full flex flex-col">
                             {activeTab === 'recorrencias' && (
