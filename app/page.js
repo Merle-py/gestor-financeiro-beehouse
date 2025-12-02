@@ -7,31 +7,31 @@ import {
     ArrowUpRight, ArrowDownRight, AlertTriangle, Calendar, X,
     List, Kanban as KanbanIcon, Check, Menu, ChevronLeft, TrendingUp, DollarSign,
     Repeat, RefreshCw, Briefcase, Wallet, FileText, AlertCircle, Ban, Gift, Calculator, Lock, PieChart as PieIcon,
-    Building2, FolderOpen, TrendingDown, Activity
+    Building2, FolderOpen, Activity, CalendarDays, MoreHorizontal
 } from 'lucide-react'
 import {
     format, isWithinInterval, parseISO, isValid, differenceInCalendarDays, startOfDay, setDate, lastDayOfMonth, isSameDay, isBefore
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LabelList, ComposedChart, Line
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LabelList, ComposedChart, Line, Area
 } from 'recharts'
 
 // --- COMPONENTES AUXILIARES ---
 
 const FilterBar = ({ filters, setFilters, categories, suppliers, dateResetKey, setDateResetKey, showDates = true, showStatus = true }) => (
-    <div className="bg-white p-4 rounded-xl border border-neutral-200 mb-4 flex flex-wrap gap-3 items-end shadow-sm flex-shrink-0">
+    <div className="bg-white p-4 rounded-2xl border border-neutral-100 mb-6 flex flex-wrap gap-4 items-end shadow-sm flex-shrink-0">
         <div className="flex-1 min-w-[200px]">
-            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Busca</label>
+            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Busca Inteligente</label>
             <div className="relative group">
-                <Search className="absolute left-3 top-2.5 text-neutral-400 group-focus-within:text-[#f9b410] transition-colors" size={16} />
-                <input className="w-full pl-9 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm focus:ring-2 focus:ring-[#f9b410] focus:bg-white outline-none transition-all" placeholder="Descrição..." value={filters.search} onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))} />
+                <Search className="absolute left-3 top-2.5 text-neutral-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+                <input className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" placeholder="Buscar por descrição, valor ou NF..." value={filters.search} onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))} />
             </div>
         </div>
         {showStatus && (
-            <div className="w-32">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Status</label>
-                <select className="w-full py-2 px-3 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" value={filters.status} onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}>
+            <div className="w-36">
+                <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Status</label>
+                <select className="w-full py-2.5 px-3 border border-neutral-200 bg-neutral-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" value={filters.status} onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}>
                     <option value="Todos">Todos</option>
                     <option value="Aberto">Aberto</option>
                     <option value="Pago">Pago</option>
@@ -40,44 +40,52 @@ const FilterBar = ({ filters, setFilters, categories, suppliers, dateResetKey, s
                 </select>
             </div>
         )}
-        <div className="w-40">
-            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Plano de Contas</label>
-            <select className="w-full py-2 px-3 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" value={filters.category} onChange={e => setFilters(prev => ({ ...prev, category: e.target.value }))}>
+        <div className="w-44">
+            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Plano de Contas</label>
+            <select className="w-full py-2.5 px-3 border border-neutral-200 bg-neutral-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" value={filters.category} onChange={e => setFilters(prev => ({ ...prev, category: e.target.value }))}>
                 <option value="Todos">Todas</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
         </div>
-        <div className="w-40">
-            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Entidade</label>
-            <select className="w-full py-2 px-3 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" value={filters.supplier} onChange={e => setFilters(prev => ({ ...prev, supplier: e.target.value }))}>
+        <div className="w-44">
+            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Entidade</label>
+            <select className="w-full py-2.5 px-3 border border-neutral-200 bg-neutral-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" value={filters.supplier} onChange={e => setFilters(prev => ({ ...prev, supplier: e.target.value }))}>
                 <option value="Todos">Todos</option>
                 {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
         </div>
         {showDates && (
             <>
-                <div className="w-auto min-w-[130px]"><label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">De</label><input key={`start-${dateResetKey}`} type="date" className="w-full py-2 px-3 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={filters.startDate} onBlur={e => setFilters(prev => ({ ...prev, startDate: e.target.value }))} /></div>
-                <div className="w-auto min-w-[130px]"><label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Até</label><input key={`end-${dateResetKey}`} type="date" className="w-full py-2 px-3 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={filters.endDate} onBlur={e => setFilters(prev => ({ ...prev, endDate: e.target.value }))} /></div>
+                <div className="w-auto min-w-[140px]"><label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Data Inicial</label><input key={`start-${dateResetKey}`} type="date" className="w-full py-2.5 px-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" defaultValue={filters.startDate} onBlur={e => setFilters(prev => ({ ...prev, startDate: e.target.value }))} /></div>
+                <div className="w-auto min-w-[140px]"><label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Data Final</label><input key={`end-${dateResetKey}`} type="date" className="w-full py-2.5 px-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" defaultValue={filters.endDate} onBlur={e => setFilters(prev => ({ ...prev, endDate: e.target.value }))} /></div>
             </>
         )}
-        <button onClick={() => { setFilters({ search: '', status: 'Todos', category: 'Todos', supplier: 'Todos', startDate: '', endDate: '' }); setDateResetKey(k => k + 1); }} className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Limpar Filtros"><X size={20} /></button>
+        <button onClick={() => { setFilters({ search: '', status: 'Todos', category: 'Todos', supplier: 'Todos', startDate: '', endDate: '' }); setDateResetKey(k => k + 1); }} className="p-2.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors" title="Limpar Filtros"><X size={20} /></button>
     </div>
 );
 
 const KpiCard = ({ title, value, subtitle, icon: Icon, colorTheme }) => {
     const themes = {
-        danger: 'bg-rose-50 text-rose-600 border-rose-100',
-        success: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-        warning: 'bg-amber-50 text-amber-600 border-amber-100',
-        primary: 'bg-blue-50 text-blue-600 border-blue-100',
-        dark: 'bg-neutral-900 text-white border-neutral-800'
+        blue: 'bg-blue-50 text-blue-600',
+        green: 'bg-emerald-50 text-emerald-600',
+        orange: 'bg-orange-50 text-orange-600',
+        red: 'bg-rose-50 text-rose-600',
+        purple: 'bg-purple-50 text-purple-600',
+        dark: 'bg-neutral-800 text-white'
     }
-    const theme = themes[colorTheme] || themes.primary;
+    const theme = themes[colorTheme] || themes.blue;
+
     return (
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-200 flex-1 min-w-[200px]">
-            <div className="flex justify-between items-start">
-                <div><p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-1">{title}</p><h3 className="text-2xl font-extrabold tracking-tight text-black">{value}</h3>{subtitle && <p className="text-xs font-medium mt-1 opacity-70" dangerouslySetInnerHTML={{ __html: subtitle }}></p>}</div>
-                <div className={`p-3 rounded-xl ${theme} ${colorTheme === 'dark' ? 'bg-neutral-800' : ''}`}><Icon size={22} strokeWidth={2.5} /></div>
+        <div className="bg-white p-6 rounded-2xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-neutral-100 flex flex-col justify-between hover:translate-y-[-2px] transition-transform duration-300">
+            <div className="flex justify-between items-start mb-4">
+                <div className={`p-3 rounded-xl ${theme} shadow-sm`}>
+                    <Icon size={24} strokeWidth={2} />
+                </div>
+                {subtitle && <span className="text-[10px] font-bold uppercase tracking-wide bg-neutral-50 text-neutral-500 px-2 py-1 rounded-full">{subtitle}</span>}
+            </div>
+            <div>
+                <h4 className="text-neutral-500 text-xs font-bold uppercase tracking-wider mb-1">{title}</h4>
+                <p className="text-2xl font-bold text-neutral-900 tracking-tight">{value}</p>
             </div>
         </div>
     )
@@ -110,7 +118,33 @@ export default function GestorFinanceiro() {
 
     const [formData, setFormData] = useState({ description: '', amount: '', due_date: '', day_of_month: '', supplier_id: '', category_id: '', status: 'Aberto', name: '', type: '', type_trans: 'despesa', nf_number: '', nf_issue_date: '', nf_received_date: '' })
 
-    // --- HELPERS ---
+    // --- HELPERS LÓGICOS ---
+
+    // Nova função de tempo congelado
+    const getDaysText = (t) => {
+        const dueDate = parseISO(t.due_date);
+
+        if (t.status === 'Cancelado') return <span className="text-neutral-400">Cancelado</span>;
+
+        if (t.status === 'Pago') {
+            // Se tem data de pagamento, calculamos o atraso NO MOMENTO DO PAGAMENTO
+            if (t.nf_received_date) {
+                const payDate = parseISO(t.nf_received_date);
+                const diff = differenceInCalendarDays(dueDate, payDate); // Positivo = Pago antes, Negativo = Pago com atraso
+                if (diff < 0) return <span className="text-red-600 font-bold">Pago c/ {Math.abs(diff)}d atraso</span>;
+                if (diff === 0) return <span className="text-emerald-600 font-bold">Pago no dia</span>;
+                return <span className="text-blue-600 font-bold">Pago {diff}d adiantado</span>;
+            }
+            return <span className="text-emerald-600 font-bold">Pago</span>;
+        }
+
+        // Se está aberto ou vencido, compara com HOJE
+        const diff = differenceInCalendarDays(dueDate, new Date());
+        if (diff < 0) return <span className="text-red-500 font-bold">{Math.abs(diff)}d de atraso</span>;
+        if (diff === 0) return <span className="text-orange-500 font-bold">Vence Hoje</span>;
+        return <span className="text-neutral-500">Vence em {diff}d</span>;
+    }
+
     const calculateSaleTotals = (sale, allTransactions) => {
         const saleTrans = allTransactions.filter(t => t.sale_id === sale.id && t.status !== 'Cancelado');
 
@@ -126,13 +160,6 @@ export default function GestorFinanceiro() {
 
         return { totalHonorarios, recebidoTotal, restanteReceber, totalComissaoPrevista, comissaoPaga, restanteComissao, impostosPagos };
     };
-
-    const getDaysText = (dateStr) => {
-        const diff = differenceInCalendarDays(parseISO(dateStr), new Date());
-        if (diff < 0) return `${Math.abs(diff)}d atraso`;
-        if (diff === 0) return 'Hoje';
-        return `em ${diff}d`;
-    }
 
     const getInitials = (name) => {
         if (!name) return '??';
@@ -156,7 +183,7 @@ export default function GestorFinanceiro() {
             setSales(salesRes.data || [])
         } catch (error) {
             console.error('Erro ao buscar dados:', error)
-            alert('Erro ao carregar dados. Verifique se as variáveis de ambiente do Supabase estão configuradas corretamente no Vercel.\n\nDetalhes: ' + (error.message || JSON.stringify(error)))
+            alert('Erro ao carregar dados.')
         } finally { setLoading(false) }
     }
     useEffect(() => { fetchAllData() }, [])
@@ -185,11 +212,7 @@ export default function GestorFinanceiro() {
         const data = filteredTransactions.filter(t => t.status !== 'Cancelado');
 
         const receitaBruta = data.filter(t => t.type === 'receita').reduce((acc, t) => acc + Number(t.amount), 0);
-
-        // Custos variáveis: Despesas vinculadas a uma venda (comissões, impostos de nota)
         const custosVariaveis = data.filter(t => t.type === 'despesa' && t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
-
-        // Despesas fixas: Despesas não vinculadas a vendas (operacionais)
         const despesasFixas = data.filter(t => t.type === 'despesa' && !t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
 
         const margemContribuicao = receitaBruta - custosVariaveis;
@@ -201,40 +224,33 @@ export default function GestorFinanceiro() {
     }, [filteredTransactions]);
 
     const chartData = useMemo(() => {
-        const catTotals = {}, monthTotals = {}
-        const fluxoCaixa = {}; // { 'Jan/24': { receita: 0, despesa: 0, saldo: 0, name: 'Jan/24', sortDate: timestamp } }
+        const catTotals = {}, flux = {};
 
         filteredTransactions.forEach(t => {
             if (t.status === 'Cancelado') return;
-
-            // Pie Chart Data (Expenses by Category)
+            // Pie
             if (t.type === 'despesa') {
                 const cat = t.categories?.name || 'Outros';
                 catTotals[cat] = (catTotals[cat] || 0) + Number(t.amount);
             }
-
-            // Cash Flow Data (Income vs Expense)
+            // Fluxo
             const date = parseISO(t.due_date);
             if (isValid(date)) {
-                const mKey = format(date, 'MMM/yy', { locale: ptBR });
-                if (!fluxoCaixa[mKey]) fluxoCaixa[mKey] = { name: mKey, receita: 0, despesa: 0, saldo: 0, sortDate: startOfDay(date).getTime() };
-
+                const k = format(date, 'MMM/yy', { locale: ptBR });
+                if (!flux[k]) flux[k] = { name: k, receita: 0, despesa: 0, saldo: 0, date: startOfDay(date).getTime() };
                 if (t.type === 'receita') {
-                    fluxoCaixa[mKey].receita += Number(t.amount);
-                    fluxoCaixa[mKey].saldo += Number(t.amount);
+                    flux[k].receita += Number(t.amount);
+                    flux[k].saldo += Number(t.amount);
                 } else {
-                    fluxoCaixa[mKey].despesa += Number(t.amount);
-                    fluxoCaixa[mKey].saldo -= Number(t.amount);
+                    flux[k].despesa += Number(t.amount);
+                    flux[k].saldo -= Number(t.amount);
                 }
             }
         })
-
-        // Sort Monthly Data
-        const sortedFluxo = Object.values(fluxoCaixa).sort((a, b) => a.sortDate - b.sortDate);
-
+        const sortedFlux = Object.values(flux).sort((a, b) => a.date - b.date);
         return {
             pie: Object.keys(catTotals).map(k => ({ name: k, value: catTotals[k] })).sort((a, b) => b.value - a.value),
-            flow: sortedFluxo
+            flow: sortedFlux
         }
     }, [filteredTransactions])
 
@@ -261,11 +277,11 @@ export default function GestorFinanceiro() {
     const kanbanColumns = useMemo(() => {
         const today = startOfDay(new Date())
         const cols = {
-            vencido: { title: '🚨 Vencidos', items: [], color: 'border-rose-500 bg-rose-50' },
-            hoje: { title: '🔥 Vencendo Hoje', items: [], color: 'border-orange-400 bg-orange-50' },
-            aberto: { title: '📅 Em Aberto', items: [], color: 'border-blue-400 bg-blue-50' },
-            pago: { title: '✅ Pagas', items: [], color: 'border-emerald-500 bg-emerald-50' },
-            cancelado: { title: '🚫 Canceladas', items: [], color: 'border-gray-400 bg-gray-50' }
+            vencido: { title: 'Vencidos', items: [], color: 'bg-red-50 border-red-100 text-red-700' },
+            hoje: { title: 'Vencendo Hoje', items: [], color: 'bg-orange-50 border-orange-100 text-orange-700' },
+            aberto: { title: 'A Vencer', items: [], color: 'bg-blue-50 border-blue-100 text-blue-700' },
+            pago: { title: 'Pagos / Recebidos', items: [], color: 'bg-emerald-50 border-emerald-100 text-emerald-700' },
+            cancelado: { title: 'Cancelados', items: [], color: 'bg-gray-50 border-gray-100 text-gray-500' }
         }
         const sorted = [...filteredTransactions].sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
         sorted.forEach(t => {
@@ -293,13 +309,6 @@ export default function GestorFinanceiro() {
                 const payload = { description: formData.description, amount: parseFloat(formData.amount), due_date: formData.due_date, supplier_id: formData.supplier_id || null, category_id: formData.category_id || null, status: finalStatus, type: formData.type_trans || 'despesa', nf_number: formData.nf_number || null, nf_issue_date: formData.nf_issue_date || null, nf_received_date: formData.nf_received_date || null }
                 const { error } = editingItem ? await supabase.from('transactions').update(payload).eq('id', editingItem.id) : await supabase.from('transactions').insert([payload])
                 if (error) throw error
-                if (!editingItem && finalStatus !== 'Pago' && payload.type === 'despesa') {
-                    const diasParaVencer = differenceInCalendarDays(parseISO(payload.due_date), new Date());
-                    if (finalStatus === 'Vencido' || diasParaVencer <= 2) {
-                        const msg = `⚠️ [B]NOVA CONTA[/B]: ${payload.description} - R$ ${payload.amount}`;
-                        fetch('/api/notify', { method: 'POST', body: JSON.stringify({ message: msg }) }).catch(console.error);
-                    }
-                }
             }
             else if (modalType === 'sale') {
                 const payload = { client_name: saleForm.client_name, property_info: saleForm.property_info, total_value: parseFloat(saleForm.total_value), agency_fee_percent: parseFloat(saleForm.agency_fee_percent), broker_commission_percent: parseFloat(saleForm.broker_commission_percent), broker_id: saleForm.broker_id || null }
@@ -308,7 +317,7 @@ export default function GestorFinanceiro() {
             else if (modalType === 'installment') {
                 const amount = parseFloat(installmentForm.amount); const taxRate = parseFloat(installmentForm.tax_rate) || 0;
                 const stats = calculateSaleTotals(editingItem, transactions);
-                if (amount > (stats.restanteReceber + 1)) { if (!confirm(`ATENÇÃO: O valor de R$ ${amount} ultrapassa o restante a receber do contrato (R$ ${stats.restanteReceber}). Deseja continuar mesmo assim?`)) { setLoading(false); return; } }
+                if (amount > (stats.restanteReceber + 1)) { if (!confirm(`ATENÇÃO: O valor de R$ ${amount} ultrapassa o restante a receber do contrato. Continuar?`)) { setLoading(false); return; } }
                 const receitaPayload = { description: `Receb. ${editingItem.property_info} (${editingItem.client_name})`, amount: amount, due_date: installmentForm.date, status: 'Aberto', type: 'receita', sale_id: editingItem.id }
                 await supabase.from('transactions').insert([receitaPayload])
                 const taxValue = amount * (taxRate / 100); if (taxValue > 0) { await supabase.from('transactions').insert([{ description: `Imposto (${taxRate}%) - ${editingItem.property_info}`, amount: taxValue, due_date: installmentForm.date, status: 'Aberto', type: 'despesa', sale_id: editingItem.id }]) }
@@ -343,17 +352,23 @@ export default function GestorFinanceiro() {
 
     async function updateStatus(id, newStatus) {
         if (newStatus === 'Cancelado') {
-            if (!confirm('ATENÇÃO: Deseja realmente CANCELAR este lançamento? Ele será removido dos cálculos financeiros, mas permanecerá no histórico.')) return;
+            if (!confirm('ATENÇÃO: Deseja realmente CANCELAR este lançamento? Ele será removido dos cálculos.')) return;
         } else if (newStatus === 'Pago') {
             if (!confirm('CONFIRMAÇÃO: Deseja marcar este lançamento como PAGO/RECEBIDO?')) return;
         }
 
-        await supabase.from('transactions').update({ status: newStatus }).eq('id', id);
+        // Se for marcar como pago, define a data de pagamento como hoje
+        const updates = { status: newStatus };
+        if (newStatus === 'Pago') {
+            updates.nf_received_date = new Date().toISOString().split('T')[0];
+        }
+
+        await supabase.from('transactions').update(updates).eq('id', id);
         fetchAllData()
     }
 
     async function handleDelete(id, table) {
-        if (confirm('PERIGO CRÍTICO: Essa ação excluirá o registro PERMANENTEMENTE do banco de dados. Para apenas invalidar, use a opção "Cancelar" (Ban). Deseja realmente EXCLUIR para sempre?')) {
+        if (confirm('PERIGO CRÍTICO: Essa ação excluirá o registro PERMANENTEMENTE. Deseja realmente EXCLUIR para sempre?')) {
             await supabase.from(table).delete().eq('id', id);
             fetchAllData()
         }
@@ -373,10 +388,13 @@ export default function GestorFinanceiro() {
     const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#e11d48', '#84cc16'];
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[#f8fafc] text-neutral-800 font-sans">
-            <aside className={`fixed top-0 left-0 h-full bg-black border-r border-neutral-900 z-30 transition-all duration-300 ease-in-out flex flex-col ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
-                <div className="p-6 flex justify-between items-center h-24"><img src="https://www.beehouse.imb.br/assets/img/lay/logo-nov2025.svg?c=1" alt="Beehouse" className="w-40 object-contain" /><button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-neutral-400"><ChevronLeft size={20} /></button></div>
-                <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
+        <div className="flex h-screen overflow-hidden bg-[#fafafa] text-neutral-800 font-sans selection:bg-yellow-100">
+            <aside className={`fixed top-0 left-0 h-full bg-white border-r border-neutral-100 z-30 transition-all duration-300 ease-in-out flex flex-col shadow-xl shadow-neutral-200/50 ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
+                <div className="p-6 flex justify-between items-center h-20 border-b border-neutral-50">
+                    <img src="https://www.beehouse.imb.br/assets/img/lay/logo-nov2025.svg?c=1" alt="Beehouse" className="w-32 object-contain" />
+                    <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-neutral-400"><ChevronLeft size={20} /></button>
+                </div>
+                <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
                     {[
                         { id: 'dashboard', label: 'Visão Geral', icon: LayoutDashboard },
                         { id: 'vendas', label: 'Vendas & Comissões', icon: Briefcase },
@@ -385,102 +403,70 @@ export default function GestorFinanceiro() {
                         { id: 'fornecedores', label: 'Entidades', icon: Building2 },
                         { id: 'categorias', label: 'Plano de Contas', icon: FolderOpen }
                     ].map(item => (
-                        <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === item.id ? 'bg-[#f9b410] text-black font-bold shadow-md' : 'text-neutral-400 hover:bg-neutral-900 hover:text-white'}`}><item.icon size={20} /> {item.label}</button>
+                        <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === item.id ? 'bg-[#f9b410] text-black font-bold shadow-md shadow-orange-100' : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900'}`}><item.icon size={18} /> {item.label}</button>
                     ))}
                 </nav>
-                <div className="p-4 border-t border-neutral-900"><div className="bg-neutral-900 p-3 rounded-lg flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f9b410] flex items-center justify-center text-black font-bold text-xs">BH</div><div><p className="text-xs font-bold text-white">Beehouse</p><p className="text-[10px] text-neutral-500">Gestor Financeiro</p></div></div></div>
+                <div className="p-4 border-t border-neutral-50"><div className="bg-neutral-50 p-3 rounded-xl flex items-center gap-3 border border-neutral-100"><div className="w-8 h-8 rounded-full bg-[#f9b410] flex items-center justify-center text-black font-bold text-xs">BH</div><div><p className="text-xs font-bold text-neutral-800">Beehouse</p><p className="text-[10px] text-neutral-500">Gestor Financeiro</p></div></div></div>
             </aside>
-            {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setIsSidebarOpen(false)} />}
+            {isSidebarOpen && <div className="fixed inset-0 bg-black/20 z-20 md:hidden backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />}
 
             <main className={`flex-1 flex flex-col h-full transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
-                <header className="h-16 border-b border-neutral-200 bg-white/80 backdrop-blur-sm px-4 md:px-8 flex justify-between items-center flex-shrink-0 sticky top-0 z-10">
-                    <div className="flex items-center gap-4"><button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-neutral-100 text-neutral-500"><Menu size={20} /></button><h1 className="text-xl font-bold text-neutral-900 capitalize">{activeTab === 'recorrencias' ? 'Despesas Fixas' : activeTab === 'fornecedores' ? 'Entidades' : activeTab === 'categorias' ? 'Plano de Contas' : activeTab}</h1></div>
+                <header className="h-20 bg-white/90 backdrop-blur-md px-6 md:px-8 flex justify-between items-center flex-shrink-0 sticky top-0 z-10 border-b border-neutral-100">
+                    <div className="flex items-center gap-4"><button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-xl hover:bg-neutral-100 text-neutral-500 transition-colors"><Menu size={20} /></button><h1 className="text-xl font-extrabold text-neutral-800 tracking-tight capitalize">{activeTab === 'recorrencias' ? 'Despesas Fixas' : activeTab === 'fornecedores' ? 'Entidades' : activeTab === 'categorias' ? 'Plano de Contas' : activeTab}</h1></div>
                     <div className="flex gap-2 md:gap-3">
-                        {activeTab === 'vendas' && <button onClick={() => openModal('sale')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition"><Plus size={18} /> Nova Venda</button>}
-                        {activeTab === 'lancamentos' && (<div className="bg-neutral-100 border border-neutral-200 rounded-lg p-1 flex"><button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-black shadow-sm' : 'text-neutral-400'}`}><List size={18} /></button><button onClick={() => setViewMode('kanban')} className={`p-1.5 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-white text-black shadow-sm' : 'text-neutral-400'}`}><KanbanIcon size={18} /></button></div>)}
-                        {activeTab === 'recorrencias' && <button onClick={forceSync} disabled={syncing} className="bg-neutral-900 hover:bg-black text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2"><RefreshCw size={16} className={syncing ? 'animate-spin' : ''} /> Sync</button>}
-                        {activeTab === 'lancamentos' && <button onClick={() => openModal('transaction')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition"><Plus size={18} /> Lançamento</button>}
-                        {(activeTab === 'fornecedores' || activeTab === 'categorias' || activeTab === 'recorrencias') && <button onClick={() => openModal(activeTab === 'fornecedores' ? 'supplier' : activeTab === 'categorias' ? 'category' : 'recurring')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition"><Plus size={18} /> Novo</button>}
+                        {activeTab === 'vendas' && <button onClick={() => openModal('sale')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-sm shadow-orange-200 transition-all hover:scale-105 active:scale-95"><Plus size={18} /> Nova Venda</button>}
+                        {activeTab === 'lancamentos' && (<div className="bg-white border border-neutral-200 rounded-xl p-1 flex shadow-sm"><button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-neutral-100 text-black' : 'text-neutral-400 hover:text-neutral-600'}`}><List size={18} /></button><button onClick={() => setViewMode('kanban')} className={`p-2 rounded-lg transition-all ${viewMode === 'kanban' ? 'bg-neutral-100 text-black' : 'text-neutral-400 hover:text-neutral-600'}`}><KanbanIcon size={18} /></button></div>)}
+                        {activeTab === 'recorrencias' && <button onClick={forceSync} disabled={syncing} className="bg-neutral-900 hover:bg-black text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all"><RefreshCw size={16} className={syncing ? 'animate-spin' : ''} /> Sync</button>}
+                        {activeTab === 'lancamentos' && <button onClick={() => openModal('transaction')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-sm shadow-orange-200 transition-all hover:scale-105 active:scale-95"><Plus size={18} /> Lançamento</button>}
+                        {(activeTab === 'fornecedores' || activeTab === 'categorias' || activeTab === 'recorrencias') && <button onClick={() => openModal(activeTab === 'fornecedores' ? 'supplier' : activeTab === 'categorias' ? 'category' : 'recurring')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-sm shadow-orange-200 transition-all hover:scale-105 active:scale-95"><Plus size={18} /> Novo</button>}
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#f8fafc]">
+                <div className="flex-1 overflow-y-auto p-4 md:p-8">
                     {activeTab === 'dashboard' && (
-                        <div className="w-full max-w-[98%] mx-auto space-y-6">
+                        <div className="w-full max-w-[98%] mx-auto space-y-8">
                             <FilterBar filters={filters} setFilters={setFilters} categories={categories} suppliers={suppliers} dateResetKey={dateResetKey} setDateResetKey={setDateResetKey} />
 
-                            {/* KPI CARDS */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                                <KpiCard title="Receita Bruta" icon={ArrowUpRight} colorTheme="primary" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.receitaBruta)} />
-                                <KpiCard title="Custos Variáveis" subtitle="Impostos & Comissões" icon={Tag} colorTheme="warning" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.custosVariaveis)} />
-                                <KpiCard title="Margem Contrib." subtitle={`${financialMetrics.margemContribuicaoPercent.toFixed(1)}% da Receita`} icon={Activity} colorTheme="success" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.margemContribuicao)} />
-                                <KpiCard title="Despesas Fixas" subtitle="Custo Operacional" icon={ArrowDownRight} colorTheme="danger" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasFixas)} />
-                                <KpiCard title="Lucro Líquido" subtitle={`${financialMetrics.margemPercent.toFixed(1)}% de Lucratividade`} icon={DollarSign} colorTheme="dark" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.lucroLiquido)} />
+                            {/* KPI CARDS REDESIGNED */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                                <KpiCard title="Receita Bruta" icon={ArrowUpRight} colorTheme="green" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.receitaBruta)} />
+                                <KpiCard title="Custos Variáveis" subtitle="Impostos & Comissões" icon={Tag} colorTheme="orange" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.custosVariaveis)} />
+                                <KpiCard title="Mg. Contribuição" subtitle={`${financialMetrics.margemContribuicaoPercent.toFixed(1)}%`} icon={Activity} colorTheme="blue" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.margemContribuicao)} />
+                                <KpiCard title="Despesas Fixas" subtitle="Operacional" icon={ArrowDownRight} colorTheme="red" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasFixas)} />
+                                <KpiCard title="Lucro Líquido" subtitle={`${financialMetrics.margemPercent.toFixed(1)}%`} icon={DollarSign} colorTheme="dark" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.lucroLiquido)} />
                             </div>
 
-                            {/* DRE E FLUXO DE CAIXA COMPLETO */}
+                            {/* CHARTS SECTION */}
                             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                                {/* DRE CARD */}
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 flex flex-col">
-                                    <h3 className="font-bold mb-6 flex items-center gap-2 text-neutral-800"><FileText size={18} className="text-[#f9b410]" /> Demonstrativo (DRE Gerencial)</h3>
-                                    <div className="flex-1 space-y-4 text-sm">
-                                        <div className="flex justify-between items-center p-2 rounded bg-neutral-50 border border-neutral-100">
-                                            <span className="font-bold text-neutral-600">(+) Receita Operacional Bruta</span>
-                                            <span className="font-bold text-neutral-900">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.receitaBruta)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center px-2 text-red-600">
-                                            <span>(-) Custos Variáveis (Impostos/Comissões)</span>
-                                            <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.custosVariaveis)}</span>
-                                        </div>
-                                        <div className="border-t border-dashed border-neutral-200 my-2"></div>
-                                        <div className="flex justify-between items-center px-2">
-                                            <span className="font-bold text-blue-600">(=) Margem de Contribuição</span>
-                                            <span className="font-bold text-blue-600">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.margemContribuicao)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center px-2 text-red-600">
-                                            <span>(-) Despesas Operacionais (Fixas)</span>
-                                            <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasFixas)}</span>
-                                        </div>
-                                        <div className="border-t border-neutral-800 my-2"></div>
-                                        <div className="flex justify-between items-center p-3 rounded bg-neutral-900 text-white shadow-lg">
-                                            <span className="font-bold text-sm">(=) Resultado Líquido (Lucro/Prejuízo)</span>
-                                            <span className={`font-bold text-lg ${financialMetrics.lucroLiquido >= 0 ? 'text-[#f9b410]' : 'text-rose-400'}`}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.lucroLiquido)}</span>
-                                        </div>
+                                <div className="xl:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-neutral-100 h-[480px]">
+                                    <div className="flex justify-between items-center mb-8">
+                                        <h3 className="font-extrabold text-xl text-neutral-800 flex items-center gap-3"><TrendingUp size={22} className="text-[#f9b410]" /> Fluxo de Caixa</h3>
+                                        <div className="flex gap-2 text-xs font-bold"><span className="flex items-center gap-1 text-emerald-600"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Receita</span><span className="flex items-center gap-1 text-red-600"><div className="w-2 h-2 rounded-full bg-red-500"></div> Despesa</span></div>
                                     </div>
-                                </div>
-
-                                {/* CHART FLUXO DE CAIXA COMPLETO */}
-                                <div className="xl:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-[500px]">
-                                    <h3 className="font-bold mb-6 flex items-center gap-2"><TrendingUp size={18} className="text-[#f9b410]" /> Fluxo de Caixa (Entradas vs Saídas)</h3>
                                     <ResponsiveContainer width="100%" height="85%">
                                         <ComposedChart data={chartData.flow} margin={{ top: 20, right: 30, left: 20, bottom: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                                            <YAxis axisLine={false} tickLine={false} width={80} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(v)} />
-                                            <Tooltip
-                                                cursor={{ fill: '#f8fafc' }}
-                                                formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
-                                            />
-                                            <Legend verticalAlign="top" height={36} />
-                                            <Bar dataKey="receita" name="Receitas" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
-                                            <Bar dataKey="despesa" name="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={20} />
-                                            <Line type="monotone" dataKey="saldo" name="Saldo Líquido" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} />
+                                            <defs>
+                                                <linearGradient id="colorSaldo" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} /><stop offset="95%" stopColor="#3b82f6" stopOpacity={0} /></linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 12 }} dy={10} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 12 }} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(v)} />
+                                            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} />
+                                            <Bar dataKey="receita" fill="#10b981" radius={[6, 6, 0, 0]} barSize={16} />
+                                            <Bar dataKey="despesa" fill="#ef4444" radius={[6, 6, 0, 0]} barSize={16} />
+                                            <Area type="monotone" dataKey="saldo" stroke="#3b82f6" fillOpacity={1} fill="url(#colorSaldo)" strokeWidth={3} />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
-                            </div>
-
-                            {/* GRÁFICO DE CATEGORIAS (MANTIDO) */}
-                            <div className="grid grid-cols-1">
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-[400px]">
-                                    <h3 className="font-bold mb-6 flex items-center gap-2"><FolderOpen size={18} className="text-indigo-500" /> Despesas por Plano de Contas</h3>
+                                <div className="bg-white p-8 rounded-3xl shadow-sm border border-neutral-100 h-[480px]">
+                                    <h3 className="font-extrabold text-xl text-neutral-800 mb-8 flex items-center gap-3"><FolderOpen size={22} className="text-indigo-500" /> Distribuição</h3>
                                     <ResponsiveContainer width="100%" height="85%">
                                         <PieChart>
-                                            <Pie data={chartData.pie} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={2} dataKey="value">
+                                            <Pie data={chartData.pie} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={4} dataKey="value" cornerRadius={6}>
                                                 {chartData.pie.map((e, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />)}
                                             </Pie>
-                                            <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} />
-                                            <Legend layout="vertical" verticalAlign="middle" align="right" />
+                                            <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} contentStyle={{ borderRadius: '12px' }} />
+                                            <Legend layout="horizontal" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '20px' }} />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -497,17 +483,17 @@ export default function GestorFinanceiro() {
                                 const showAlert = stats.recebidoTotal > 0 && hasPendingCommission;
 
                                 return (
-                                    <div key={sale.id} className={`bg-white rounded-xl border p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${showAlert ? 'border-l-4 border-l-yellow-400' : 'border-neutral-200'}`}>
+                                    <div key={sale.id} className={`bg-white rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between ${showAlert ? 'border-l-4 border-l-yellow-400' : 'border-neutral-200'}`}>
                                         <div>
-                                            {showAlert && <div className="mb-3 flex items-center gap-2 text-xs font-bold text-yellow-700 bg-yellow-50 px-2 py-1 rounded w-fit"><AlertCircle size={14} /> Comissão Pendente</div>}
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div><h3 className="font-bold text-lg text-neutral-900 leading-tight">{sale.property_info}</h3><p className="text-sm text-neutral-500">{sale.client_name}</p></div>
+                                            {showAlert && <div className="mb-4 flex items-center gap-2 text-xs font-bold text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded-lg w-fit"><AlertCircle size={14} /> Comissão Pendente</div>}
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div><h3 className="font-bold text-xl text-neutral-900 leading-tight">{sale.property_info}</h3><p className="text-sm text-neutral-500 mt-1">{sale.client_name}</p></div>
                                                 <div className="text-right"><span className="bg-neutral-100 text-neutral-600 px-2 py-1 rounded text-[10px] font-bold uppercase block mb-1">Ativo</span><p className="text-[10px] font-bold text-neutral-400">Corretor: {sale.suppliers?.name?.split(' ')[0] || 'N/A'}</p></div>
                                             </div>
-                                            <div className="space-y-3 mb-6">
-                                                <div>
-                                                    <div className="flex justify-between text-xs mb-1"><span className="text-neutral-500">Recebido</span><span className="font-bold text-green-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.recebidoTotal)} <span className="text-neutral-300">/ {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(stats.totalHonorarios)}</span></span></div>
-                                                    <div className="w-full bg-neutral-100 rounded-full h-1.5"><div className="bg-green-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${Math.min(percent, 100)}%` }}></div></div>
+                                            <div className="space-y-4 mb-6">
+                                                <div className="p-3 bg-neutral-50 rounded-xl">
+                                                    <div className="flex justify-between text-xs mb-2"><span className="text-neutral-500 font-bold uppercase">Recebido</span><span className="font-bold text-emerald-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.recebidoTotal)} <span className="text-neutral-400 font-normal">/ {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(stats.totalHonorarios)}</span></span></div>
+                                                    <div className="w-full bg-neutral-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full transition-all duration-500" style={{ width: `${Math.min(percent, 100)}%` }}></div></div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-dashed border-neutral-100">
                                                     <div><p className="text-neutral-400">Comissão Paga</p><p className="font-bold text-neutral-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.comissaoPaga)}</p></div>
@@ -516,8 +502,8 @@ export default function GestorFinanceiro() {
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
-                                            <button onClick={() => openModal('installment', sale)} className="flex-1 bg-neutral-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-black transition">Lançar Recebimento</button>
-                                            <button onClick={() => openModal('bonus', sale)} className="px-3 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition" title="Adicionar Bônus"><Gift size={16} /></button>
+                                            <button onClick={() => openModal('installment', sale)} className="flex-1 bg-neutral-900 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-black transition shadow-lg shadow-neutral-200">Lançar Recebimento</button>
+                                            <button onClick={() => openModal('bonus', sale)} className="px-4 bg-yellow-100 text-yellow-700 rounded-xl hover:bg-yellow-200 transition" title="Adicionar Bônus"><Gift size={18} /></button>
                                         </div>
                                     </div>
                                 )
@@ -530,9 +516,80 @@ export default function GestorFinanceiro() {
                             <FilterBar filters={filters} setFilters={setFilters} categories={categories} suppliers={suppliers} dateResetKey={dateResetKey} setDateResetKey={setDateResetKey} />
                             <div className="flex-1 min-h-0">
                                 {viewMode === 'list' ? (
-                                    <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden h-full overflow-y-auto"><table className="w-full text-sm text-left"><thead className="bg-neutral-50 text-neutral-500 font-semibold border-b sticky top-0 bg-neutral-50 z-10"><tr><th className="px-6 py-3">Tipo</th><th className="px-6 py-3">Status</th><th className="px-6 py-3">Vencimento</th><th className="px-6 py-3">Descrição</th><th className="px-6 py-3">Nota Fiscal</th><th className="px-6 py-3">Entidade</th><th className="px-6 py-3 text-right">Valor</th><th className="px-6 py-3 text-center">Ações</th></tr></thead><tbody className="divide-y divide-neutral-100">{filteredTransactions.map(t => (<tr key={t.id} className="hover:bg-neutral-50 transition-colors"><td className="px-6 py-3">{t.type === 'receita' ? <ArrowUpRight size={16} className="text-green-500" /> : <ArrowDownRight size={16} className="text-red-500" />}</td><td className="px-6 py-3"><span className={`px-2 py-1 rounded-full text-xs font-bold border ${t.status === 'Pago' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : t.status === 'Vencido' ? 'bg-rose-50 text-rose-600 border-rose-100' : t.status === 'Cancelado' ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>{t.status}</span></td><td className="px-6 py-3 text-neutral-600">{new Date(t.due_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td><td className="px-6 py-3 font-medium">{t.description}</td><td className="px-6 py-3 text-neutral-500 font-mono text-xs">{t.nf_number ? `NF ${t.nf_number}` : '-'}</td><td className="px-6 py-3 text-neutral-500">{t.suppliers?.name}</td><td className={`px-6 py-3 text-right font-bold ${t.type === 'receita' ? 'text-green-600' : 'text-red-600'}`}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}</td><td className="px-6 py-3 text-center flex justify-center gap-2">{(t.status === 'Aberto' || t.status === 'Vencido') && <div className="flex gap-1"><button onClick={() => updateStatus(t.id, 'Pago')} className="p-1 bg-emerald-50 text-emerald-600 rounded hover:bg-emerald-100" title="Pagar/Receber"><Check size={16} /></button><button onClick={() => updateStatus(t.id, 'Cancelado')} className="p-1 bg-gray-50 text-gray-500 rounded hover:bg-gray-100" title="Cancelar"><Ban size={16} /></button></div>}<button onClick={() => openModal('transaction', t)} className="p-1 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit size={16} /></button><button onClick={() => handleDelete(t.id, 'transactions')} className="p-1 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><Trash2 size={16} /></button></td></tr>))}</tbody></table></div>
+                                    <div className="bg-white rounded-3xl shadow-sm border border-neutral-200 overflow-hidden h-full overflow-y-auto custom-scrollbar">
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="bg-neutral-50 text-neutral-500 font-semibold border-b sticky top-0 z-10"><tr><th className="px-6 py-4">Status</th><th className="px-6 py-4">Vencimento</th><th className="px-6 py-4">Descrição</th><th className="px-6 py-4">Entidade</th><th className="px-6 py-4">Plano Contas</th><th className="px-6 py-4 text-right">Valor</th><th className="px-6 py-4 text-center">Ações</th></tr></thead>
+                                            <tbody className="divide-y divide-neutral-100">
+                                                {filteredTransactions.map(t => (
+                                                    <tr key={t.id} className="hover:bg-blue-50/30 transition-colors group">
+                                                        <td className="px-6 py-4">
+                                                            <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center gap-1 w-fit ${t.status === 'Pago' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : t.status === 'Vencido' ? 'bg-rose-50 text-rose-600 border-rose-100' : t.status === 'Cancelado' ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                                                {t.status === 'Pago' && <Check size={10} />} {t.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4"><div className="flex flex-col"><span className="text-neutral-700 font-medium">{new Date(t.due_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span><span className="text-[10px]">{getDaysText(t)}</span></div></td>
+                                                        <td className="px-6 py-4 font-medium text-neutral-900">{t.description}</td>
+                                                        <td className="px-6 py-4 text-neutral-500">{t.suppliers?.name}</td>
+                                                        <td className="px-6 py-4 text-neutral-500"><span className="bg-neutral-100 px-2 py-1 rounded text-xs">{t.categories?.name}</span></td>
+                                                        <td className={`px-6 py-4 text-right font-bold text-base ${t.type === 'receita' ? 'text-emerald-600' : 'text-rose-600'}`}>{t.type === 'despesa' ? '-' : '+'} {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}</td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <div className="flex justify-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                {(t.status === 'Aberto' || t.status === 'Vencido') && <><button onClick={() => updateStatus(t.id, 'Pago')} className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition" title="Pagar"><Check size={16} /></button><button onClick={() => updateStatus(t.id, 'Cancelado')} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-100 transition" title="Cancelar"><Ban size={16} /></button></>}
+                                                                <button onClick={() => openModal('transaction', t)} className="p-2 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition"><Edit size={16} /></button>
+                                                                <button onClick={() => handleDelete(t.id, 'transactions')} className="p-2 text-rose-600 bg-rose-50 rounded-lg hover:bg-rose-100 transition"><Trash2 size={16} /></button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 ) : (
-                                    <div className="h-full overflow-x-auto"><div className="grid grid-cols-5 gap-3 h-full pb-4 min-w-[1100px]">{Object.entries(kanbanColumns).map(([key, col]) => (<div key={key} className={`flex flex-col h-full rounded-xl border-t-[3px] ${col.color} bg-neutral-100/50`}><div className="p-2 border-b border-neutral-200/50 bg-neutral-100/80 flex justify-between"><h3 className="font-bold text-xs uppercase">{col.title}</h3><span className="text-xs font-bold bg-white px-2 rounded">{col.items.length}</span></div><div className="p-2 flex-1 overflow-y-auto space-y-2 custom-scrollbar">{col.items.map(t => (<div key={t.id} className="bg-white p-2.5 rounded-lg shadow-sm border border-neutral-200 hover:shadow-md transition-all"><div className="flex justify-between mb-1"><span className={`text-[9px] font-bold uppercase px-1 rounded ${t.type === 'receita' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.type}</span><span className="text-[9px] text-neutral-400">{getDaysText(t.due_date)}</span></div><p className="font-bold text-xs mb-1 truncate">{t.description}</p><p className="text-[10px] text-neutral-500 mb-2 truncate">{t.suppliers?.name}</p><div className="flex justify-between items-center border-t border-dashed pt-2"><span className="font-bold text-xs">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}</span>{(t.status === 'Aberto' || t.status === 'Vencido') && <div className="flex gap-1"><button onClick={() => updateStatus(t.id, 'Pago')} className="bg-emerald-50 text-emerald-600 p-1 rounded-full"><Check size={12} /></button><button onClick={() => updateStatus(t.id, 'Cancelado')} className="bg-gray-50 text-gray-400 p-1 rounded-full"><Ban size={12} /></button></div>}</div></div>))}</div></div>))}</div></div>
+                                    // KANBAN VIEW COM CARDS DETALHADOS
+                                    <div className="h-full overflow-x-auto">
+                                        <div className="grid grid-cols-5 gap-4 h-full pb-4 min-w-[1400px]">
+                                            {Object.entries(kanbanColumns).map(([key, col]) => (
+                                                <div key={key} className="flex flex-col h-full rounded-2xl bg-neutral-100/70 border border-neutral-200">
+                                                    <div className={`p-3 rounded-t-2xl border-b border-neutral-200 ${col.color.replace('text', 'bg').replace('50', '100')} flex justify-between items-center`}>
+                                                        <h3 className={`font-bold text-xs uppercase ${col.color.split(' ')[2]}`}>{col.title}</h3>
+                                                        <span className="text-xs font-bold bg-white/80 px-2 py-0.5 rounded-full shadow-sm">{col.items.length}</span>
+                                                    </div>
+                                                    <div className="p-3 flex-1 overflow-y-auto space-y-3 custom-scrollbar">
+                                                        {col.items.map(t => (
+                                                            <div key={t.id} onClick={() => openModal('transaction', t)} className="bg-white p-4 rounded-xl shadow-sm border border-neutral-200 hover:shadow-md hover:border-blue-300 cursor-pointer transition-all group relative">
+                                                                {/* Category Badge */}
+                                                                <div className="absolute top-3 right-3 text-[9px] font-bold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                                                                    {t.categories?.name}
+                                                                </div>
+
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <div className={`w-1.5 h-1.5 rounded-full ${t.type === 'receita' ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                                                                    <span className="text-[10px] font-bold text-neutral-400 uppercase">{getDaysText(t)}</span>
+                                                                </div>
+
+                                                                <p className="font-bold text-sm text-neutral-900 mb-1 leading-tight line-clamp-2">{t.description}</p>
+                                                                <p className="text-xs text-neutral-500 mb-3 flex items-center gap-1"><Building2 size={10} /> {t.suppliers?.name}</p>
+
+                                                                <div className="flex justify-between items-end border-t border-dashed border-neutral-100 pt-3">
+                                                                    <span className={`font-extrabold text-base ${t.type === 'receita' ? 'text-emerald-600' : 'text-neutral-800'}`}>
+                                                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}
+                                                                    </span>
+
+                                                                    {/* Quick Actions on Hover */}
+                                                                    {(t.status === 'Aberto' || t.status === 'Vencido') && (
+                                                                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                                                            <button onClick={() => updateStatus(t.id, 'Pago')} className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition" title="Pagar"><Check size={14} /></button>
+                                                                            <button onClick={() => updateStatus(t.id, 'Cancelado')} className="p-1.5 bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-100 transition" title="Cancelar"><Ban size={14} /></button>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </div>
