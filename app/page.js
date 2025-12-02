@@ -148,7 +148,10 @@ export default function GestorFinanceiro() {
             setCategories(catRes.data || [])
             setRecurringExpenses(recurRes.data || [])
             setSales(salesRes.data || [])
-        } catch (error) { console.error(error) } finally { setLoading(false) }
+        } catch (error) {
+            console.error('Erro ao buscar dados:', error)
+            alert('Erro ao carregar dados. Verifique se as variáveis de ambiente do Supabase estão configuradas corretamente no Vercel.\n\nDetalhes: ' + (error.message || JSON.stringify(error)))
+        } finally { setLoading(false) }
     }
     useEffect(() => { fetchAllData() }, [])
 
