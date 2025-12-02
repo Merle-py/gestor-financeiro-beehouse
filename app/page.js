@@ -75,7 +75,7 @@ const KpiCard = ({ title, value, subtitle, icon: Icon, colorTheme }) => {
     return (
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-200 flex-1 min-w-[240px]">
           <div className="flex justify-between items-start">
-              <div><p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-1">{title}</p><h3 className={`text-2xl font-extrabold tracking-tight ${colorTheme === 'dark' ? 'text-white' : 'text-black'}`}>{value}</h3>{subtitle && <p className="text-xs font-medium mt-1 opacity-70" dangerouslySetInnerHTML={{__html: subtitle}}></p>}</div>
+              <div><p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-1">{title}</p><h3 className="text-2xl font-extrabold tracking-tight text-black">{value}</h3>{subtitle && <p className="text-xs font-medium mt-1 opacity-70" dangerouslySetInnerHTML={{__html: subtitle}}></p>}</div>
               <div className={`p-3 rounded-xl ${theme} ${colorTheme === 'dark' ? 'bg-neutral-800' : ''}`}><Icon size={22} strokeWidth={2.5} /></div>
           </div>
       </div>
