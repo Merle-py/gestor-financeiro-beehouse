@@ -321,7 +321,11 @@ export default function GestorFinanceiro() {
             }
             else if (modalType === 'sale') {
                 const payload = { client_name: saleForm.client_name, property_info: saleForm.property_info, total_value: parseFloat(saleForm.total_value), agency_fee_percent: parseFloat(saleForm.agency_fee_percent), broker_commission_percent: parseFloat(saleForm.broker_commission_percent), broker_id: saleForm.broker_id || null }
-                const { error } = await supabase.from('sales').insert([payload]); if (error) throw error;
+                // LÓGICA DE ATUALIZAÇÃO OU INSERÇÃO PARA VENDAS
+                const { error } = editingItem
+                    ? await supabase.from('sales').update(payload).eq('id', editingItem.id)
+                    : await supabase.from('sales').insert([payload]);
+                if (error) throw error;
             }
             else if (modalType === 'installment') {
                 const amount = parseFloat(installmentForm.amount); const taxRate = parseFloat(installmentForm.tax_rate) || 0;
@@ -383,7 +387,23 @@ export default function GestorFinanceiro() {
         const today = new Date().toISOString().split('T')[0]
         setFormData({ description: '', amount: '', due_date: today, day_of_month: '', supplier_id: '', category_id: '', status: 'Aberto', name: '', type: '', type_trans: item?.type || 'despesa', nf_number: '', nf_issue_date: '', nf_received_date: '' })
         if (type === 'transaction' && item) setFormData({ ...item, type_trans: item.type })
-        if (type === 'sale') setSaleForm({ client_name: '', property_info: '', total_value: '', agency_fee_percent: '6', broker_commission_percent: '30', broker_id: '' })
+
+        // PREENCHIMENTO DO FORMULÁRIO DE VENDA PARA EDIÇÃO
+        if (type === 'sale') {
+            if (item) {
+                setSaleForm({
+                    client_name: item.client_name,
+                    property_info: item.property_info,
+                    total_value: item.total_value,
+                    agency_fee_percent: item.agency_fee_percent,
+                    broker_commission_percent: item.broker_commission_percent,
+                    broker_id: item.broker_id
+                })
+            } else {
+                setSaleForm({ client_name: '', property_info: '', total_value: '', agency_fee_percent: '6', broker_commission_percent: '30', broker_id: '' })
+            }
+        }
+
         if (type === 'installment') setInstallmentForm({ amount: '', date: today, tax_rate: '' })
         if (type === 'bonus') setBonusForm({ amount: '', broker_percent: '100', tax_rate: '0', date: today })
         setIsModalOpen(true)
@@ -520,11 +540,21 @@ export default function GestorFinanceiro() {
                                 return (
                                     <div key={sale.id} className={`bg-white rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between ${showAlert ? 'border-l-4 border-l-yellow-400' : 'border-neutral-200'}`}>
                                         <div>
-                                            {showAlert && <div className="mb-4 flex items-center gap-2 text-xs font-bold text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded-lg w-fit"><AlertCircle size={14} /> Comissão Pendente</div>}
                                             <div className="flex justify-between items-start mb-6">
-                                                <div><h3 className="font-bold text-xl text-neutral-900 leading-tight">{sale.property_info}</h3><p className="text-sm text-neutral-500 mt-1">{sale.client_name}</p></div>
-                                                <div className="text-right"><span className="bg-neutral-100 text-neutral-600 px-2 py-1 rounded text-[10px] font-bold uppercase block mb-1">Ativo</span><p className="text-[10px] font-bold text-neutral-400">Corretor: {sale.suppliers?.name?.split(' ')[0] || 'N/A'}</p></div>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => openModal('sale', sale)} className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition" title="Editar Venda"><Edit size={16} /></button>
+                                                    <button onClick={() => handleDelete(sale.id, 'sales')} className="text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition" title="Excluir Venda"><Trash2 size={16} /></button>
+                                                </div>
+                                                <div className="text-right"><span className="bg-neutral-100 text-neutral-600 px-2 py-1 rounded text-[10px] font-bold uppercase block mb-1">Ativo</span></div>
                                             </div>
+
+                                            {showAlert && <div className="mb-4 flex items-center gap-2 text-xs font-bold text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded-lg w-fit"><AlertCircle size={14} /> Comissão Pendente</div>}
+                                            <div className="mb-6">
+                                                <h3 className="font-bold text-xl text-neutral-900 leading-tight">{sale.property_info}</h3>
+                                                <p className="text-sm text-neutral-500 mt-1">{sale.client_name}</p>
+                                                <p className="text-[10px] font-bold text-neutral-400 mt-2">Corretor: {sale.suppliers?.name?.split(' ')[0] || 'N/A'}</p>
+                                            </div>
+
                                             <div className="space-y-4 mb-6">
                                                 <div className="p-3 bg-neutral-50 rounded-xl">
                                                     <div className="flex justify-between text-xs mb-2"><span className="text-neutral-500 font-bold uppercase">Recebido</span><span className="font-bold text-emerald-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.recebidoTotal)} <span className="text-neutral-400 font-normal">/ {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(stats.totalHonorarios)}</span></span></div>
