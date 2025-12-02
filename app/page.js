@@ -6,7 +6,8 @@ import {
     LayoutDashboard, Receipt, Users, Tag,
     ArrowUpRight, ArrowDownRight, AlertTriangle, Calendar, X,
     List, Kanban as KanbanIcon, Check, Menu, ChevronLeft, TrendingUp, DollarSign,
-    Repeat, RefreshCw, Briefcase, Wallet, FileText, AlertCircle, Ban, Gift, Calculator, Lock, PieChart as PieIcon
+    Repeat, RefreshCw, Briefcase, Wallet, FileText, AlertCircle, Ban, Gift, Calculator, Lock, PieChart as PieIcon,
+    Building2, FolderOpen
 } from 'lucide-react'
 import {
     format, isWithinInterval, parseISO, isValid, differenceInCalendarDays, startOfDay, setDate, lastDayOfMonth, isSameDay, isBefore
@@ -40,14 +41,14 @@ const FilterBar = ({ filters, setFilters, categories, suppliers, dateResetKey, s
             </div>
         )}
         <div className="w-40">
-            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Categoria</label>
+            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Plano de Contas</label>
             <select className="w-full py-2 px-3 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" value={filters.category} onChange={e => setFilters(prev => ({ ...prev, category: e.target.value }))}>
                 <option value="Todos">Todas</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
         </div>
         <div className="w-40">
-            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Fornecedor</label>
+            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block">Entidade</label>
             <select className="w-full py-2 px-3 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#f9b410]" value={filters.supplier} onChange={e => setFilters(prev => ({ ...prev, supplier: e.target.value }))}>
                 <option value="Todos">Todos</option>
                 {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -133,6 +134,11 @@ export default function GestorFinanceiro() {
         return `em ${diff}d`;
     }
 
+    const getInitials = (name) => {
+        if (!name) return '??';
+        return name.substring(0, 2).toUpperCase();
+    }
+
     async function fetchAllData() {
         setLoading(true)
         try {
@@ -161,7 +167,6 @@ export default function GestorFinanceiro() {
     }
 
     const financialMetrics = useMemo(() => {
-        // CORREÇÃO: Forçar conversão para Number para evitar erros de soma de strings
         const data = transactions.filter(t => {
             if (t.status === 'Cancelado') return false;
             if (filters.startDate && filters.endDate) {
@@ -204,6 +209,19 @@ export default function GestorFinanceiro() {
         })
     }, [recurringExpenses, filters])
 
+    const filteredSuppliers = useMemo(() => {
+        return suppliers.filter(s => {
+            return s.name.toLowerCase().includes(filters.search.toLowerCase()) || (s.type && s.type.toLowerCase().includes(filters.search.toLowerCase()));
+        });
+    }, [suppliers, filters]);
+
+    const filteredCategories = useMemo(() => {
+        return categories.filter(c => {
+            return c.name.toLowerCase().includes(filters.search.toLowerCase());
+        });
+    }, [categories, filters]);
+
+
     const kanbanColumns = useMemo(() => {
         const today = startOfDay(new Date())
         const cols = {
@@ -236,7 +254,6 @@ export default function GestorFinanceiro() {
                     if (formData.due_date < today) finalStatus = 'Vencido'
                     else finalStatus = 'Aberto'
                 }
-                // Usa type_trans selecionado no modal ou fallback para despesa
                 const payload = { description: formData.description, amount: parseFloat(formData.amount), due_date: formData.due_date, supplier_id: formData.supplier_id || null, category_id: formData.category_id || null, status: finalStatus, type: formData.type_trans || 'despesa', nf_number: formData.nf_number || null, nf_issue_date: formData.nf_issue_date || null, nf_received_date: formData.nf_received_date || null }
                 const { error } = editingItem ? await supabase.from('transactions').update(payload).eq('id', editingItem.id) : await supabase.from('transactions').insert([payload])
                 if (error) throw error
@@ -288,16 +305,20 @@ export default function GestorFinanceiro() {
         } catch (e) { alert(e.message) } finally { setLoading(false) }
     }
 
+    // --- FUNÇÃO ATUALIZADA COM CONFIRMAÇÃO ---
     async function updateStatus(id, newStatus) {
-        if (newStatus === 'Cancelado' && !confirm('ATENÇÃO: Cancelar um lançamento remove ele dos cálculos financeiros. Deseja continuar?')) return;
+        if (newStatus === 'Cancelado') {
+            if (!confirm('ATENÇÃO: Deseja realmente CANCELAR este lançamento? Ele será removido dos cálculos financeiros, mas permanecerá no histórico.')) return;
+        } else if (newStatus === 'Pago') {
+            if (!confirm('CONFIRMAÇÃO: Deseja marcar este lançamento como PAGO/RECEBIDO?')) return;
+        }
+
         await supabase.from('transactions').update({ status: newStatus }).eq('id', id);
         fetchAllData()
     }
 
-    async function quickPay(id) { await supabase.from('transactions').update({ status: 'Pago' }).eq('id', id); fetchAllData() }
-
     async function handleDelete(id, table) {
-        if (confirm('PERIGO: Essa ação excluirá o registro permanentemente do banco de dados. Para apenas invalidar, use a opção "Cancelar". Deseja EXCLUIR mesmo assim?')) {
+        if (confirm('PERIGO CRÍTICO: Essa ação excluirá o registro PERMANENTEMENTE do banco de dados. Para apenas invalidar, use a opção "Cancelar" (Ban). Deseja realmente EXCLUIR para sempre?')) {
             await supabase.from(table).delete().eq('id', id);
             fetchAllData()
         }
@@ -306,7 +327,6 @@ export default function GestorFinanceiro() {
     function openModal(type, item = null) {
         setModalType(type); setEditingItem(item);
         const today = new Date().toISOString().split('T')[0]
-        // Definimos type_trans com base no item editado ou padrão despesa
         setFormData({ description: '', amount: '', due_date: today, day_of_month: '', supplier_id: '', category_id: '', status: 'Aberto', name: '', type: '', type_trans: item?.type || 'despesa', nf_number: '', nf_issue_date: '', nf_received_date: '' })
         if (type === 'transaction' && item) setFormData({ ...item, type_trans: item.type })
         if (type === 'sale') setSaleForm({ client_name: '', property_info: '', total_value: '', agency_fee_percent: '6', broker_commission_percent: '30', broker_id: '' })
@@ -332,7 +352,14 @@ export default function GestorFinanceiro() {
             <aside className={`fixed top-0 left-0 h-full bg-black border-r border-neutral-900 z-30 transition-all duration-300 ease-in-out flex flex-col ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
                 <div className="p-6 flex justify-between items-center h-24"><img src="https://www.beehouse.imb.br/assets/img/lay/logo-nov2025.svg?c=1" alt="Beehouse" className="w-40 object-contain" /><button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-neutral-400"><ChevronLeft size={20} /></button></div>
                 <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
-                    {[{ id: 'dashboard', label: 'Visão Geral', icon: LayoutDashboard }, { id: 'vendas', label: 'Vendas & Comissões', icon: Briefcase }, { id: 'lancamentos', label: 'Lançamentos', icon: Receipt }, { id: 'recorrencias', label: 'Recorrências', icon: Repeat }, { id: 'fornecedores', label: 'Fornecedores', icon: Users }, { id: 'categorias', label: 'Categorias', icon: Tag }].map(item => (
+                    {[
+                        { id: 'dashboard', label: 'Visão Geral', icon: LayoutDashboard },
+                        { id: 'vendas', label: 'Vendas & Comissões', icon: Briefcase },
+                        { id: 'lancamentos', label: 'Lançamentos', icon: Receipt },
+                        { id: 'recorrencias', label: 'Despesas Fixas', icon: Repeat },
+                        { id: 'fornecedores', label: 'Entidades', icon: Building2 },
+                        { id: 'categorias', label: 'Plano de Contas', icon: FolderOpen }
+                    ].map(item => (
                         <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === item.id ? 'bg-[#f9b410] text-black font-bold shadow-md' : 'text-neutral-400 hover:bg-neutral-900 hover:text-white'}`}><item.icon size={20} /> {item.label}</button>
                     ))}
                 </nav>
@@ -342,7 +369,7 @@ export default function GestorFinanceiro() {
 
             <main className={`flex-1 flex flex-col h-full transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
                 <header className="h-16 border-b border-neutral-200 bg-white/80 backdrop-blur-sm px-4 md:px-8 flex justify-between items-center flex-shrink-0 sticky top-0 z-10">
-                    <div className="flex items-center gap-4"><button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-neutral-100 text-neutral-500"><Menu size={20} /></button><h1 className="text-xl font-bold text-neutral-900 capitalize">{activeTab}</h1></div>
+                    <div className="flex items-center gap-4"><button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-neutral-100 text-neutral-500"><Menu size={20} /></button><h1 className="text-xl font-bold text-neutral-900 capitalize">{activeTab === 'recorrencias' ? 'Despesas Fixas' : activeTab === 'fornecedores' ? 'Entidades' : activeTab === 'categorias' ? 'Plano de Contas' : activeTab}</h1></div>
                     <div className="flex gap-2 md:gap-3">
                         {activeTab === 'vendas' && <button onClick={() => openModal('sale')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition"><Plus size={18} /> Nova Venda</button>}
                         {activeTab === 'lancamentos' && (<div className="bg-neutral-100 border border-neutral-200 rounded-lg p-1 flex"><button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-black shadow-sm' : 'text-neutral-400'}`}><List size={18} /></button><button onClick={() => setViewMode('kanban')} className={`p-1.5 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-white text-black shadow-sm' : 'text-neutral-400'}`}><KanbanIcon size={18} /></button></div>)}
@@ -366,32 +393,20 @@ export default function GestorFinanceiro() {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-[500px]">
                                     <h3 className="font-bold mb-6 flex items-center gap-2"><TrendingUp size={18} className="text-[#f9b410]" /> Fluxo Mensal</h3>
-                                    {/* CORREÇÃO: Margem top ajustada e LabelList adicionada */}
                                     <ResponsiveContainer width="100%" height="85%">
                                         <BarChart data={chartData.bar} margin={{ top: 20, right: 30, left: 20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <XAxis dataKey="name" axisLine={false} tickLine={false} />
                                             <YAxis axisLine={false} tickLine={false} width={80} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(v)} />
                                             <Tooltip cursor={{ fill: '#f8fafc' }} />
-                                            <Bar
-                                                dataKey="total"
-                                                fill="#f9b410"
-                                                radius={[6, 6, 0, 0]}
-                                                barSize={50}
-                                                isAnimationActive={false} // <--- ESSA LINHA CORRIGE O PROBLEMA NA VERCEL
-                                            >
-                                                <LabelList
-                                                    dataKey="total"
-                                                    position="top"
-                                                    formatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(v)}
-                                                    style={{ fill: '#666', fontSize: '12px', fontWeight: 'bold' }}
-                                                />
+                                            <Bar dataKey="total" fill="#f9b410" radius={[6, 6, 0, 0]} barSize={50} isAnimationActive={false}>
+                                                <LabelList dataKey="total" position="top" formatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(v)} style={{ fill: '#666', fontSize: '12px', fontWeight: 'bold' }} />
                                             </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 h-[500px]">
-                                    <h3 className="font-bold mb-6 flex items-center gap-2"><Tag size={18} className="text-indigo-500" /> Por Categoria</h3>
+                                    <h3 className="font-bold mb-6 flex items-center gap-2"><Tag size={18} className="text-indigo-500" /> Por Plano de Contas</h3>
                                     <ResponsiveContainer width="100%" height="85%"><PieChart><Pie data={chartData.pie} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={5} dataKey="value">{chartData.pie.map((e, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />)}</Pie><Tooltip /><Legend /></PieChart></ResponsiveContainer>
                                 </div>
                             </div>
@@ -442,22 +457,87 @@ export default function GestorFinanceiro() {
                                 {viewMode === 'list' ? (
                                     <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden h-full overflow-y-auto"><table className="w-full text-sm text-left"><thead className="bg-neutral-50 text-neutral-500 font-semibold border-b sticky top-0 bg-neutral-50 z-10"><tr><th className="px-6 py-3">Tipo</th><th className="px-6 py-3">Status</th><th className="px-6 py-3">Vencimento</th><th className="px-6 py-3">Descrição</th><th className="px-6 py-3">Nota Fiscal</th><th className="px-6 py-3">Entidade</th><th className="px-6 py-3 text-right">Valor</th><th className="px-6 py-3 text-center">Ações</th></tr></thead><tbody className="divide-y divide-neutral-100">{filteredTransactions.map(t => (<tr key={t.id} className="hover:bg-neutral-50 transition-colors"><td className="px-6 py-3">{t.type === 'receita' ? <ArrowUpRight size={16} className="text-green-500" /> : <ArrowDownRight size={16} className="text-red-500" />}</td><td className="px-6 py-3"><span className={`px-2 py-1 rounded-full text-xs font-bold border ${t.status === 'Pago' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : t.status === 'Vencido' ? 'bg-rose-50 text-rose-600 border-rose-100' : t.status === 'Cancelado' ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>{t.status}</span></td><td className="px-6 py-3 text-neutral-600">{new Date(t.due_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td><td className="px-6 py-3 font-medium">{t.description}</td><td className="px-6 py-3 text-neutral-500 font-mono text-xs">{t.nf_number ? `NF ${t.nf_number}` : '-'}</td><td className="px-6 py-3 text-neutral-500">{t.suppliers?.name}</td><td className={`px-6 py-3 text-right font-bold ${t.type === 'receita' ? 'text-green-600' : 'text-red-600'}`}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}</td><td className="px-6 py-3 text-center flex justify-center gap-2">{(t.status === 'Aberto' || t.status === 'Vencido') && <div className="flex gap-1"><button onClick={() => updateStatus(t.id, 'Pago')} className="p-1 bg-emerald-50 text-emerald-600 rounded hover:bg-emerald-100" title="Pagar/Receber"><Check size={16} /></button><button onClick={() => updateStatus(t.id, 'Cancelado')} className="p-1 bg-gray-50 text-gray-500 rounded hover:bg-gray-100" title="Cancelar"><Ban size={16} /></button></div>}<button onClick={() => openModal('transaction', t)} className="p-1 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit size={16} /></button><button onClick={() => handleDelete(t.id, 'transactions')} className="p-1 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><Trash2 size={16} /></button></td></tr>))}</tbody></table></div>
                                 ) : (
-                                    <div className="h-full overflow-x-auto"><div className="grid grid-cols-5 gap-3 h-full pb-4 min-w-[1100px]">{Object.entries(kanbanColumns).map(([key, col]) => (<div key={key} className={`flex flex-col h-full rounded-xl border-t-[3px] ${col.color} bg-neutral-100/50`}><div className="p-2 border-b border-neutral-200/50 bg-neutral-100/80 flex justify-between"><h3 className="font-bold text-xs uppercase">{col.title}</h3><span className="text-xs font-bold bg-white px-2 rounded">{col.items.length}</span></div><div className="p-2 flex-1 overflow-y-auto space-y-2 custom-scrollbar">{col.items.map(t => (<div key={t.id} className="bg-white p-2.5 rounded-lg shadow-sm border border-neutral-200 hover:shadow-md transition-all"><div className="flex justify-between mb-1"><span className={`text-[9px] font-bold uppercase px-1 rounded ${t.type === 'receita' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.type}</span><span className="text-[9px] text-neutral-400">{getDaysText(t)}</span></div><p className="font-bold text-xs mb-1 truncate">{t.description}</p><p className="text-[10px] text-neutral-500 mb-2 truncate">{t.suppliers?.name}</p><div className="flex justify-between items-center border-t border-dashed pt-2"><span className="font-bold text-xs">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}</span>{(t.status === 'Aberto' || t.status === 'Vencido') && <div className="flex gap-1"><button onClick={() => updateStatus(t.id, 'Pago')} className="bg-emerald-50 text-emerald-600 p-1 rounded-full"><Check size={12} /></button><button onClick={() => updateStatus(t.id, 'Cancelado')} className="bg-gray-50 text-gray-400 p-1 rounded-full"><Ban size={12} /></button></div>}</div></div>))}</div></div>))}</div></div>
+                                    <div className="h-full overflow-x-auto"><div className="grid grid-cols-5 gap-3 h-full pb-4 min-w-[1100px]">{Object.entries(kanbanColumns).map(([key, col]) => (<div key={key} className={`flex flex-col h-full rounded-xl border-t-[3px] ${col.color} bg-neutral-100/50`}><div className="p-2 border-b border-neutral-200/50 bg-neutral-100/80 flex justify-between"><h3 className="font-bold text-xs uppercase">{col.title}</h3><span className="text-xs font-bold bg-white px-2 rounded">{col.items.length}</span></div><div className="p-2 flex-1 overflow-y-auto space-y-2 custom-scrollbar">{col.items.map(t => (<div key={t.id} className="bg-white p-2.5 rounded-lg shadow-sm border border-neutral-200 hover:shadow-md transition-all"><div className="flex justify-between mb-1"><span className={`text-[9px] font-bold uppercase px-1 rounded ${t.type === 'receita' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.type}</span><span className="text-[9px] text-neutral-400">{getDaysText(t.due_date)}</span></div><p className="font-bold text-xs mb-1 truncate">{t.description}</p><p className="text-[10px] text-neutral-500 mb-2 truncate">{t.suppliers?.name}</p><div className="flex justify-between items-center border-t border-dashed pt-2"><span className="font-bold text-xs">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}</span>{(t.status === 'Aberto' || t.status === 'Vencido') && <div className="flex gap-1"><button onClick={() => updateStatus(t.id, 'Pago')} className="bg-emerald-50 text-emerald-600 p-1 rounded-full"><Check size={12} /></button><button onClick={() => updateStatus(t.id, 'Cancelado')} className="bg-gray-50 text-gray-400 p-1 rounded-full"><Ban size={12} /></button></div>}</div></div>))}</div></div>))}</div></div>
                                 )}
                             </div>
                         </div>
                     )}
 
+                    {/* NOVOS LEIAUTES PARA AS ABAS DE CONFIGURAÇÃO */}
                     {(activeTab === 'recorrencias' || activeTab === 'fornecedores' || activeTab === 'categorias') && (
-                        <div className="w-full max-w-[98%] mx-auto bg-white rounded-xl shadow-sm border border-neutral-200 p-4 h-full overflow-y-auto">
+                        <div className="w-full max-w-[98%] mx-auto h-full flex flex-col">
                             {activeTab === 'recorrencias' && (
-                                <div className="flex flex-col h-full">
-                                    <div className="mb-4 flex justify-between items-center"><h3 className="font-bold">Contas Recorrentes (Fixas)</h3><FilterBar showDates={false} showStatus={false} filters={filters} setFilters={setFilters} categories={categories} suppliers={suppliers} dateResetKey={dateResetKey} setDateResetKey={setDateResetKey} /></div>
-                                    <table className="w-full text-sm text-left"><thead><tr><th>Dia</th><th>Descrição</th><th>Fornecedor</th><th>Valor</th><th>Ações</th></tr></thead><tbody>{filteredRecurring.map(r => <tr key={r.id} className="border-b hover:bg-neutral-50"><td className="py-2">Dia {r.day_of_month}</td><td>{r.description}</td><td>{r.suppliers?.name}</td><td>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(r.amount)}</td><td><button onClick={() => openModal('recurring', r)} className="text-blue-600 p-1"><Edit size={14} /></button><button onClick={() => handleDelete(r.id, 'recurring_expenses')} className="text-red-600 p-1"><Trash2 size={14} /></button></td></tr>)}</tbody></table>
-                                </div>
+                                <>
+                                    <div className="mb-4 flex justify-between items-center"><h3 className="font-bold text-lg text-neutral-700">Despesas Fixas & Assinaturas</h3><FilterBar showDates={false} showStatus={false} filters={filters} setFilters={setFilters} categories={categories} suppliers={suppliers} dateResetKey={dateResetKey} setDateResetKey={setDateResetKey} /></div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-10">
+                                        {filteredRecurring.map(r => (
+                                            <div key={r.id} className="bg-white p-5 rounded-xl border border-neutral-200 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold uppercase flex items-center gap-1">
+                                                        <Calendar size={12} /> Dia {r.day_of_month}
+                                                    </div>
+                                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                                        <button onClick={() => openModal('recurring', r)} className="p-1 hover:bg-neutral-100 rounded text-blue-600"><Edit size={14} /></button>
+                                                        <button onClick={() => handleDelete(r.id, 'recurring_expenses')} className="p-1 hover:bg-neutral-100 rounded text-red-600"><Trash2 size={14} /></button>
+                                                    </div>
+                                                </div>
+                                                <h4 className="font-bold text-neutral-900 mb-1 truncate" title={r.description}>{r.description}</h4>
+                                                <p className="text-xs text-neutral-500 mb-4 truncate">{r.suppliers?.name || 'Fornecedor não informado'}</p>
+                                                <div className="border-t pt-3 flex justify-between items-center">
+                                                    <span className="text-xs text-neutral-400 uppercase font-bold">Valor Fixo</span>
+                                                    <span className="font-bold text-neutral-800">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(r.amount)}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
                             )}
-                            {activeTab !== 'recorrencias' && (
-                                <table className="w-full text-sm text-left"><thead><tr><th>Nome</th><th>Detalhe</th><th>Ações</th></tr></thead><tbody>{(activeTab === 'fornecedores' ? suppliers : categories).map(i => <tr key={i.id} className="border-b hover:bg-neutral-50"><td className="py-2 font-medium">{i.name}</td><td>{i.type || i.description}</td><td><button onClick={() => openModal(activeTab === 'fornecedores' ? 'supplier' : 'category', i)} className="text-blue-600 p-1"><Edit size={14} /></button><button onClick={() => handleDelete(i.id, activeTab)} className="text-red-600 p-1"><Trash2 size={14} /></button></td></tr>)}</tbody></table>
+                            {activeTab === 'fornecedores' && (
+                                <>
+                                    <div className="mb-4 flex justify-between items-center"><h3 className="font-bold text-lg text-neutral-700">Entidades (Clientes & Fornecedores)</h3><FilterBar showDates={false} showStatus={false} filters={filters} setFilters={setFilters} categories={categories} suppliers={suppliers} dateResetKey={dateResetKey} setDateResetKey={setDateResetKey} /></div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-10">
+                                        {filteredSuppliers.map(s => (
+                                            <div key={s.id} className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm hover:shadow-md transition-all flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500 font-bold text-sm">
+                                                    {getInitials(s.name)}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-neutral-900 truncate" title={s.name}>{s.name}</h4>
+                                                    <p className="text-xs text-neutral-500 truncate">{s.type || 'Geral'}</p>
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                    <button onClick={() => openModal('supplier', s)} className="p-1.5 hover:bg-blue-50 rounded text-blue-600 transition"><Edit size={14} /></button>
+                                                    <button onClick={() => handleDelete(s.id, 'suppliers')} className="p-1.5 hover:bg-red-50 rounded text-red-600 transition"><Trash2 size={14} /></button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                            {activeTab === 'categorias' && (
+                                <>
+                                    <div className="mb-4 flex justify-between items-center"><h3 className="font-bold text-lg text-neutral-700">Plano de Contas (Centros de Custo)</h3><FilterBar showDates={false} showStatus={false} filters={filters} setFilters={setFilters} categories={categories} suppliers={suppliers} dateResetKey={dateResetKey} setDateResetKey={setDateResetKey} /></div>
+                                    <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+                                        {filteredCategories.map((c, idx) => (
+                                            <div key={c.id} className={`p-4 flex justify-between items-center hover:bg-neutral-50 transition-colors ${idx !== filteredCategories.length - 1 ? 'border-b border-neutral-100' : ''}`}>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-yellow-50 p-2 rounded-lg text-[#f9b410]">
+                                                        <FolderOpen size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-neutral-800 text-sm">{c.name}</h4>
+                                                        <p className="text-xs text-neutral-400">{c.description || 'Sem descrição'}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => openModal('category', c)} className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition"><Edit size={16} /></button>
+                                                    <button onClick={() => handleDelete(c.id, 'categories')} className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition"><Trash2 size={16} /></button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
                             )}
                         </div>
                     )}
@@ -469,7 +549,7 @@ export default function GestorFinanceiro() {
                 <div className="fixed inset-0 bg-neutral-900/60 z-50 flex items-center justify-center backdrop-blur-sm p-4"><div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200"><div className="px-6 py-4 border-b border-neutral-100 flex justify-between items-center bg-neutral-50"><h3 className="font-bold text-lg text-neutral-800">{modalType === 'recurring' ? 'Conta Recorrente' : modalType === 'bonus' ? 'Lançar Bônus' : 'Novo Registro'}</h3><button onClick={() => setIsModalOpen(false)}><X size={20} className="text-neutral-400 hover:text-neutral-800 transition-colors" /></button></div><div className="p-6 space-y-4">
                     {modalType === 'transaction' && (
                         <>
-                            {/* NOVO SELETOR DE TIPO (ENTRADA/SAÍDA) */}
+                            {/* SELETOR DE TIPO (ENTRADA/SAÍDA) */}
                             <div className="flex gap-2 mb-2 p-1 bg-neutral-100 rounded-lg">
                                 <button
                                     onClick={() => setFormData({ ...formData, type_trans: 'despesa' })}
@@ -487,7 +567,7 @@ export default function GestorFinanceiro() {
 
                             <div><label className="text-xs font-bold text-neutral-500 uppercase">Descrição</label><input className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410] focus:border-transparent transition-all" defaultValue={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4"><div><label className="text-xs font-bold text-neutral-500 uppercase">Valor</label><input type="number" step="0.01" className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all" defaultValue={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} /></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Vencimento</label><input type="date" className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all" defaultValue={formData.due_date} onChange={e => setFormData({ ...formData, due_date: e.target.value })} /></div></div>
-                            {/* Campos de NF apenas se for despesa ou se desejar em receita, mantido conforme lógica original para simplificar, mas disponível para ambos se necessário. Adaptado para mostrar sempre que útil */}
+                            {/* Campos de NF */}
                             <div className="bg-neutral-50 p-3 rounded-lg border border-neutral-200">
                                 <p className="text-[10px] font-bold text-neutral-500 uppercase mb-2 flex items-center gap-1"><FileText size={12} /> Dados da Nota Fiscal / Recibo</p>
                                 <div className="grid grid-cols-2 gap-2 mb-2">
@@ -497,11 +577,11 @@ export default function GestorFinanceiro() {
                                 <div><label className="text-[10px] font-bold text-neutral-500 uppercase">Data de {formData.type_trans === 'receita' ? 'Recebimento' : 'Pagamento'}</label><input type="date" className="w-full border p-2 rounded text-sm mt-1" defaultValue={formData.nf_received_date} onChange={e => setFormData({ ...formData, nf_received_date: e.target.value })} /><p className="text-[9px] text-neutral-400 mt-1">*Preencher isso marca a conta como {formData.type_trans === 'receita' ? 'Paga/Recebida' : 'Paga'}.</p></div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4"><div><label className="text-xs font-bold text-neutral-500 uppercase">Fornecedor / Entidade</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.supplier_id} onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}><option value="">Selecione...</option>{suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Categoria</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.category_id} onChange={e => setFormData({ ...formData, category_id: e.target.value })}><option value="">Selecione...</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Status Inicial</label><div className="flex gap-2 mt-2"><button onClick={() => setFormData({ ...formData, status: 'Aberto' })} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Aberto' ? 'bg-neutral-800 text-white border-neutral-800 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>Aberto</button><button onClick={() => setFormData({ ...formData, status: 'Pago' })} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Pago' ? 'bg-emerald-500 text-white border-emerald-500 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>{formData.type_trans === 'receita' ? 'Recebido' : 'Pago'}</button></div></div>
+                            <div className="grid grid-cols-2 gap-4"><div><label className="text-xs font-bold text-neutral-500 uppercase">Entidade (Favorecido)</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.supplier_id} onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}><option value="">Selecione...</option>{suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Plano de Contas</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.category_id} onChange={e => setFormData({ ...formData, category_id: e.target.value })}><option value="">Selecione...</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Status Inicial</label><div className="flex gap-2 mt-2"><button onClick={() => setFormData({ ...formData, status: 'Aberto' })} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Aberto' ? 'bg-neutral-800 text-white border-neutral-800 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>Aberto</button><button onClick={() => setFormData({ ...formData, status: 'Pago' })} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Pago' ? 'bg-emerald-500 text-white border-emerald-500 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>{formData.type_trans === 'receita' ? 'Recebido' : 'Pago'}</button></div></div>
                         </>
                     )}
                     {modalType === 'recurring' && (
-                        <><div><label className="text-xs font-bold text-neutral-500 uppercase">Descrição (Ex: Aluguel)</label><input className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} /></div><div className="grid grid-cols-2 gap-4"><div><label className="text-xs font-bold text-neutral-500 uppercase">Valor Fixo</label><input type="number" step="0.01" className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} /></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Dia de Vencimento</label><input type="number" min="1" max="31" placeholder="Dia (1-31)" className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.day_of_month} onChange={e => setFormData({ ...formData, day_of_month: e.target.value })} /></div></div><div className="grid grid-cols-2 gap-4"><div><label className="text-xs font-bold text-neutral-500 uppercase">Fornecedor</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white" defaultValue={formData.supplier_id} onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}><option value="">Selecione...</option>{suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Categoria</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white" defaultValue={formData.category_id} onChange={e => setFormData({ ...formData, category_id: e.target.value })}><option value="">Selecione...</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div></div></>
+                        <><div><label className="text-xs font-bold text-neutral-500 uppercase">Descrição (Ex: Aluguel)</label><input className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} /></div><div className="grid grid-cols-2 gap-4"><div><label className="text-xs font-bold text-neutral-500 uppercase">Valor Fixo</label><input type="number" step="0.01" className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} /></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Dia de Vencimento</label><input type="number" min="1" max="31" placeholder="Dia (1-31)" className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.day_of_month} onChange={e => setFormData({ ...formData, day_of_month: e.target.value })} /></div></div><div className="grid grid-cols-2 gap-4"><div><label className="text-xs font-bold text-neutral-500 uppercase">Entidade</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white" defaultValue={formData.supplier_id} onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}><option value="">Selecione...</option>{suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div><label className="text-xs font-bold text-neutral-500 uppercase">Plano de Contas</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 mt-1 bg-white" defaultValue={formData.category_id} onChange={e => setFormData({ ...formData, category_id: e.target.value })}><option value="">Selecione...</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div></div></>
                     )}
                     {modalType === 'sale' && (
                         <>
@@ -518,8 +598,6 @@ export default function GestorFinanceiro() {
                     {modalType === 'installment' && (
                         <>
                             <p className="text-sm text-neutral-500 mb-2">Lançar parcela recebida. O sistema calculará Imposto e Comissão.</p>
-
-                            {/* PAINEL DE INFO DA PARCELA */}
                             <div className="bg-blue-50 p-3 rounded mb-3 text-xs space-y-1 border border-blue-200">
                                 {(() => {
                                     const stats = calculateSaleTotals(editingItem, transactions);
@@ -532,7 +610,6 @@ export default function GestorFinanceiro() {
                                     )
                                 })()}
                             </div>
-
                             <input placeholder="Valor Recebido (Bruto)" type="number" className="w-full border p-2 rounded" value={installmentForm.amount} onChange={e => setInstallmentForm({ ...installmentForm, amount: e.target.value })} />
                             <div className="grid grid-cols-2 gap-2">
                                 <input placeholder="Imposto (%) Ex: 10.68" type="number" className="w-full border p-2 rounded" value={installmentForm.tax_rate} onChange={e => setInstallmentForm({ ...installmentForm, tax_rate: e.target.value })} />
@@ -543,14 +620,12 @@ export default function GestorFinanceiro() {
                     {modalType === 'bonus' && (
                         <>
                             <p className="text-xs text-neutral-500 mb-2">Simulação de Bônus (Imposto incide apenas sobre a parte da imobiliária).</p>
-                            {/* SIMULADOR DE BÔNUS */}
                             <div className="bg-neutral-50 p-3 rounded mb-3 text-xs space-y-1 border border-neutral-200">
                                 <div className="flex justify-between"><span>Valor Total:</span> <b>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(bonusForm.amount || 0)}</b></div>
                                 <div className="flex justify-between text-red-600"><span>(-) Corretor ({bonusForm.broker_percent}%):</span> <b>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((bonusForm.amount || 0) * (bonusForm.broker_percent / 100))}</b></div>
                                 <div className="flex justify-between border-t pt-1 mt-1"><span>Base Imob:</span> <b>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((bonusForm.amount || 0) - ((bonusForm.amount || 0) * (bonusForm.broker_percent / 100)))}</b></div>
                                 <div className="flex justify-between text-orange-600"><span>(-) Imposto ({bonusForm.tax_rate}%):</span> <b>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(((bonusForm.amount || 0) - ((bonusForm.amount || 0) * (bonusForm.broker_percent / 100))) * (bonusForm.tax_rate / 100))}</b></div>
                             </div>
-
                             <input placeholder="Valor Total do Bônus" type="number" className="w-full border p-2 rounded" value={bonusForm.amount} onChange={e => setBonusForm({ ...bonusForm, amount: e.target.value })} />
                             <div className="grid grid-cols-2 gap-2">
                                 <div><label className="text-[10px] uppercase font-bold text-neutral-500">% Corretor</label><input type="number" className="w-full border p-2 rounded" value={bonusForm.broker_percent} onChange={e => setBonusForm({ ...bonusForm, broker_percent: e.target.value })} /></div>
