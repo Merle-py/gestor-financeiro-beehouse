@@ -20,18 +20,18 @@ import {
 // --- COMPONENTES AUXILIARES ---
 
 const FilterBar = ({ filters, setFilters, categories, suppliers, dateResetKey, setDateResetKey, showDates = true, showStatus = true }) => (
-    <div className="bg-white p-4 rounded-2xl border border-neutral-100 mb-6 flex flex-wrap gap-4 items-end shadow-sm flex-shrink-0">
-        <div className="flex-1 min-w-[200px]">
-            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Busca Inteligente</label>
+    <div className="bg-white p-3 rounded-xl border border-neutral-200 mb-4 flex flex-wrap gap-3 items-end shadow-sm flex-shrink-0">
+        <div className="flex-1 min-w-[180px]">
+            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block tracking-wide">Busca</label>
             <div className="relative group">
-                <Search className="absolute left-3 top-2.5 text-neutral-400 group-focus-within:text-blue-600 transition-colors" size={18} />
-                <input className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" placeholder="Buscar por descrição, valor ou NF..." value={filters.search} onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))} />
+                <Search className="absolute left-2.5 top-2 text-neutral-400 group-focus-within:text-blue-600 transition-colors" size={16} />
+                <input className="w-full pl-8 pr-3 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all" placeholder="Buscar..." value={filters.search} onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))} />
             </div>
         </div>
         {showStatus && (
-            <div className="w-36">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Status</label>
-                <select className="w-full py-2.5 px-3 border border-neutral-200 bg-neutral-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" value={filters.status} onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}>
+            <div className="w-32">
+                <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block tracking-wide">Status</label>
+                <select className="w-full py-1.5 px-2 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" value={filters.status} onChange={e => setFilters(prev => ({ ...prev, status: e.target.value }))}>
                     <option value="Todos">Todos</option>
                     <option value="Aberto">Aberto</option>
                     <option value="Pago">Pago</option>
@@ -40,27 +40,27 @@ const FilterBar = ({ filters, setFilters, categories, suppliers, dateResetKey, s
                 </select>
             </div>
         )}
-        <div className="w-44">
-            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Plano de Contas</label>
-            <select className="w-full py-2.5 px-3 border border-neutral-200 bg-neutral-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" value={filters.category} onChange={e => setFilters(prev => ({ ...prev, category: e.target.value }))}>
+        <div className="w-40">
+            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block tracking-wide">Plano de Contas</label>
+            <select className="w-full py-1.5 px-2 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" value={filters.category} onChange={e => setFilters(prev => ({ ...prev, category: e.target.value }))}>
                 <option value="Todos">Todas</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
         </div>
-        <div className="w-44">
-            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Entidade</label>
-            <select className="w-full py-2.5 px-3 border border-neutral-200 bg-neutral-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" value={filters.supplier} onChange={e => setFilters(prev => ({ ...prev, supplier: e.target.value }))}>
+        <div className="w-40">
+            <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block tracking-wide">Entidade</label>
+            <select className="w-full py-1.5 px-2 border border-neutral-200 bg-neutral-50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" value={filters.supplier} onChange={e => setFilters(prev => ({ ...prev, supplier: e.target.value }))}>
                 <option value="Todos">Todos</option>
                 {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
         </div>
         {showDates && (
             <>
-                <div className="w-auto min-w-[140px]"><label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Data Inicial</label><input key={`start-${dateResetKey}`} type="date" className="w-full py-2.5 px-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" defaultValue={filters.startDate} onBlur={e => setFilters(prev => ({ ...prev, startDate: e.target.value }))} /></div>
-                <div className="w-auto min-w-[140px]"><label className="text-[10px] font-bold text-neutral-400 uppercase mb-1.5 block tracking-wide">Data Final</label><input key={`end-${dateResetKey}`} type="date" className="w-full py-2.5 px-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" defaultValue={filters.endDate} onBlur={e => setFilters(prev => ({ ...prev, endDate: e.target.value }))} /></div>
+                <div className="w-auto min-w-[120px]"><label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block tracking-wide">De</label><input key={`start-${dateResetKey}`} type="date" className="w-full py-1.5 px-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" defaultValue={filters.startDate} onBlur={e => setFilters(prev => ({ ...prev, startDate: e.target.value }))} /></div>
+                <div className="w-auto min-w-[120px]"><label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block tracking-wide">Até</label><input key={`end-${dateResetKey}`} type="date" className="w-full py-1.5 px-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 cursor-pointer" defaultValue={filters.endDate} onBlur={e => setFilters(prev => ({ ...prev, endDate: e.target.value }))} /></div>
             </>
         )}
-        <button onClick={() => { setFilters({ search: '', status: 'Todos', category: 'Todos', supplier: 'Todos', startDate: '', endDate: '' }); setDateResetKey(k => k + 1); }} className="p-2.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors" title="Limpar Filtros"><X size={20} /></button>
+        <button onClick={() => { setFilters({ search: '', status: 'Todos', category: 'Todos', supplier: 'Todos', startDate: '', endDate: '' }); setDateResetKey(k => k + 1); }} className="p-2 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Limpar Filtros"><X size={18} /></button>
     </div>
 );
 
@@ -76,16 +76,16 @@ const KpiCard = ({ title, value, subtitle, icon: Icon, colorTheme }) => {
     const theme = themes[colorTheme] || themes.blue;
 
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] border border-neutral-100 flex flex-col justify-between hover:translate-y-[-2px] transition-transform duration-300">
-            <div className="flex justify-between items-start mb-4">
-                <div className={`p-3 rounded-xl ${theme} shadow-sm`}>
-                    <Icon size={24} strokeWidth={2} />
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-neutral-100 flex flex-col justify-between hover:translate-y-[-2px] transition-transform duration-300">
+            <div className="flex justify-between items-start mb-2">
+                <div className={`p-2 rounded-lg ${theme} shadow-sm`}>
+                    <Icon size={18} strokeWidth={2.5} />
                 </div>
-                {subtitle && <span className="text-[10px] font-bold uppercase tracking-wide bg-neutral-50 text-neutral-500 px-2 py-1 rounded-full truncate max-w-[140px]" title={subtitle}>{subtitle}</span>}
+                {subtitle && <span className="text-[9px] font-bold uppercase tracking-wide bg-neutral-50 text-neutral-500 px-1.5 py-0.5 rounded-full truncate max-w-[100px]" title={subtitle}>{subtitle}</span>}
             </div>
             <div>
-                <h4 className="text-neutral-500 text-[11px] font-bold uppercase tracking-wider mb-1 truncate" title={title}>{title}</h4>
-                <p className="text-2xl font-bold text-neutral-900 tracking-tight">{value}</p>
+                <h4 className="text-neutral-500 text-[10px] font-bold uppercase tracking-wider mb-0.5 truncate" title={title}>{title}</h4>
+                <p className="text-lg font-bold text-neutral-900 tracking-tight">{value}</p>
             </div>
         </div>
     )
@@ -99,10 +99,10 @@ const MarginCard = ({ title, value, color }) => {
     }
     const theme = colors[color] || colors.blue;
     return (
-        <div className={`flex-1 p-4 rounded-xl border ${theme} flex flex-col items-center justify-center min-w-[150px]`}>
-            <span className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-1">{title}</span>
-            <span className="text-2xl font-extrabold tracking-tight flex items-center gap-1">
-                <Percent size={18} className="opacity-50" />
+        <div className={`flex-1 p-3 rounded-xl border ${theme} flex flex-col items-center justify-center min-w-[120px]`}>
+            <span className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-1 text-center">{title}</span>
+            <span className="text-lg font-extrabold tracking-tight flex items-center gap-1">
+                <Percent size={14} className="opacity-50" />
                 {value.toFixed(1)}%
             </span>
         </div>
@@ -234,10 +234,7 @@ export default function GestorFinanceiro() {
         const lucroOperacional = receitaLiquidaAgencia - despesasFixas;
 
         // Margens %
-        // Margem de Retenção (Quanto fica na imobiliária após pagar corretores/impostos)
         const margemRetencao = vgc > 0 ? (receitaLiquidaAgencia / vgc) * 100 : 0;
-
-        // Margem de Lucro (Quanto sobra no final)
         const margemLucro = vgc > 0 ? (lucroOperacional / vgc) * 100 : 0;
 
         return { vgc, repasses, receitaLiquidaAgencia, despesasFixas, lucroOperacional, margemRetencao, margemLucro };
@@ -395,13 +392,14 @@ export default function GestorFinanceiro() {
     const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#e11d48', '#84cc16'];
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[#fafafa] text-neutral-800 font-sans selection:bg-yellow-100">
-            <aside className={`fixed top-0 left-0 h-full bg-black border-r border-neutral-100 z-30 transition-all duration-300 ease-in-out flex flex-col shadow-xl shadow-neutral-200/50 ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
-                <div className="p-6 flex justify-between items-center h-20 border-b border-neutral-50">
+        <div className="flex h-screen overflow-hidden bg-[#f0f0f0] text-neutral-800 font-sans selection:bg-yellow-100">
+            {/* SIDEBAR PRETA */}
+            <aside className={`fixed top-0 left-0 h-full bg-black border-r border-neutral-900 z-30 transition-all duration-300 ease-in-out flex flex-col ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
+                <div className="p-6 flex justify-between items-center h-20 border-b border-neutral-900">
                     <img src="https://www.beehouse.imb.br/assets/img/lay/logo-nov2025.svg?c=1" alt="Beehouse" className="w-32 object-contain" />
                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-neutral-400"><ChevronLeft size={20} /></button>
                 </div>
-                <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
+                <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
                     {[
                         { id: 'dashboard', label: 'Visão Geral', icon: LayoutDashboard },
                         { id: 'vendas', label: 'Vendas & Comissões', icon: Briefcase },
@@ -410,93 +408,82 @@ export default function GestorFinanceiro() {
                         { id: 'fornecedores', label: 'Entidades', icon: Building2 },
                         { id: 'categorias', label: 'Plano de Contas', icon: FolderOpen }
                     ].map(item => (
-                        <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === item.id ? 'bg-[#f9b410] text-black font-bold shadow-md shadow-orange-100' : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900'}`}><item.icon size={18} /> {item.label}</button>
+                        <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === item.id ? 'bg-[#f9b410] text-black font-bold shadow-md shadow-orange-900/20' : 'text-neutral-400 hover:bg-neutral-900 hover:text-white'}`}><item.icon size={18} /> {item.label}</button>
                     ))}
                 </nav>
-                <div className="p-4 border-t border-neutral-50"><div className="bg-neutral-50 p-3 rounded-xl flex items-center gap-3 border border-neutral-100"><div className="w-8 h-8 rounded-full bg-[#f9b410] flex items-center justify-center text-black font-bold text-xs">BH</div><div><p className="text-xs font-bold text-neutral-800">Beehouse</p><p className="text-[10px] text-neutral-500">Gestor Financeiro</p></div></div></div>
+                <div className="p-4 border-t border-neutral-900"><div className="bg-neutral-900 p-3 rounded-xl flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-[#f9b410] flex items-center justify-center text-black font-bold text-xs">BH</div><div><p className="text-xs font-bold text-white">Beehouse</p><p className="text-[10px] text-neutral-500">Gestor Financeiro</p></div></div></div>
             </aside>
-            {isSidebarOpen && <div className="fixed inset-0 bg-black/20 z-20 md:hidden backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />}
+
+            {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-20 md:hidden backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />}
 
             <main className={`flex-1 flex flex-col h-full transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
-                <header className="h-20 bg-white/90 backdrop-blur-md px-6 md:px-8 flex justify-between items-center flex-shrink-0 sticky top-0 z-10 border-b border-neutral-100">
-                    <div className="flex items-center gap-4"><button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-xl hover:bg-neutral-100 text-neutral-500 transition-colors"><Menu size={20} /></button><h1 className="text-xl font-extrabold text-neutral-800 tracking-tight capitalize">{activeTab === 'recorrencias' ? 'Despesas Fixas' : activeTab === 'fornecedores' ? 'Entidades' : activeTab === 'categorias' ? 'Plano de Contas' : activeTab}</h1></div>
+                <header className="h-16 bg-white/90 backdrop-blur-md px-6 md:px-8 flex justify-between items-center flex-shrink-0 sticky top-0 z-10 border-b border-neutral-200 shadow-sm">
+                    <div className="flex items-center gap-4"><button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-xl hover:bg-neutral-100 text-neutral-500 transition-colors"><Menu size={20} /></button><h1 className="text-lg font-bold text-neutral-800 tracking-tight capitalize">{activeTab === 'recorrencias' ? 'Despesas Fixas' : activeTab === 'fornecedores' ? 'Entidades' : activeTab === 'categorias' ? 'Plano de Contas' : activeTab}</h1></div>
                     <div className="flex gap-2 md:gap-3">
-                        {activeTab === 'vendas' && <button onClick={() => openModal('sale')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-sm shadow-orange-200 transition-all hover:scale-105 active:scale-95"><Plus size={18} /> Nova Venda</button>}
-                        {activeTab === 'lancamentos' && (<div className="bg-white border border-neutral-200 rounded-xl p-1 flex shadow-sm"><button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-neutral-100 text-black' : 'text-neutral-400 hover:text-neutral-600'}`}><List size={18} /></button><button onClick={() => setViewMode('kanban')} className={`p-2 rounded-lg transition-all ${viewMode === 'kanban' ? 'bg-neutral-100 text-black' : 'text-neutral-400 hover:text-neutral-600'}`}><KanbanIcon size={18} /></button></div>)}
-                        {activeTab === 'recorrencias' && <button onClick={forceSync} disabled={syncing} className="bg-neutral-900 hover:bg-black text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all"><RefreshCw size={16} className={syncing ? 'animate-spin' : ''} /> Sync</button>}
-                        {activeTab === 'lancamentos' && <button onClick={() => openModal('transaction')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-sm shadow-orange-200 transition-all hover:scale-105 active:scale-95"><Plus size={18} /> Lançamento</button>}
-                        {(activeTab === 'fornecedores' || activeTab === 'categorias' || activeTab === 'recorrencias') && <button onClick={() => openModal(activeTab === 'fornecedores' ? 'supplier' : activeTab === 'categorias' ? 'category' : 'recurring')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-sm shadow-orange-200 transition-all hover:scale-105 active:scale-95"><Plus size={18} /> Novo</button>}
+                        {activeTab === 'vendas' && <button onClick={() => openModal('sale')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 shadow-sm transition-all hover:scale-105 active:scale-95"><Plus size={16} /> Nova Venda</button>}
+                        {activeTab === 'lancamentos' && (<div className="bg-white border border-neutral-200 rounded-lg p-1 flex shadow-sm"><button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-neutral-100 text-black' : 'text-neutral-400 hover:text-neutral-600'}`}><List size={16} /></button><button onClick={() => setViewMode('kanban')} className={`p-1.5 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-neutral-100 text-black' : 'text-neutral-400 hover:text-neutral-600'}`}><KanbanIcon size={16} /></button></div>)}
+                        {activeTab === 'recorrencias' && <button onClick={forceSync} disabled={syncing} className="bg-neutral-900 hover:bg-black text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 transition-all"><RefreshCw size={14} className={syncing ? 'animate-spin' : ''} /> Sync</button>}
+                        {activeTab === 'lancamentos' && <button onClick={() => openModal('transaction')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 shadow-sm transition-all hover:scale-105 active:scale-95"><Plus size={16} /> Lançamento</button>}
+                        {(activeTab === 'fornecedores' || activeTab === 'categorias' || activeTab === 'recorrencias') && <button onClick={() => openModal(activeTab === 'fornecedores' ? 'supplier' : activeTab === 'categorias' ? 'category' : 'recurring')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 shadow-sm transition-all hover:scale-105 active:scale-95"><Plus size={16} /> Novo</button>}
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-4 md:p-8">
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#f8fafc]">
                     {activeTab === 'dashboard' && (
-                        <div className="w-full max-w-[98%] mx-auto space-y-8 pb-8">
+                        <div className="w-full max-w-[98%] mx-auto space-y-4 pb-4">
                             <FilterBar filters={filters} setFilters={setFilters} categories={categories} suppliers={suppliers} dateResetKey={dateResetKey} setDateResetKey={setDateResetKey} />
 
-                            {/* KPI CARDS - TERMINOLOGIA IMOBILIÁRIA */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                                <KpiCard title="VGC Total (Entrada Bruta)" icon={ArrowUpRight} colorTheme="green" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.vgc)} />
-                                <KpiCard title="Repasses (Corretores/Impostos)" subtitle="Custo Variável" icon={Tag} colorTheme="orange" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.repasses)} />
-                                <KpiCard title="Receita Líquida da Agência" subtitle="Após Repasses" icon={Scale} colorTheme="blue" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.receitaLiquidaAgencia)} />
-                                <KpiCard title="Despesas Fixas (Operacional)" subtitle="Aluguel, Luz, etc." icon={ArrowDownRight} colorTheme="red" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasFixas)} />
-                                <KpiCard title="Lucro/Prejuízo Operacional" subtitle="Resultado Final" icon={DollarSign} colorTheme="dark" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.lucroOperacional)} />
+                            {/* KPI CARDS COMPACTOS */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                                <KpiCard title="VGC Total" icon={ArrowUpRight} colorTheme="green" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.vgc)} />
+                                <KpiCard title="Repasses" subtitle="Corretor/Imposto" icon={Tag} colorTheme="orange" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.repasses)} />
+                                <KpiCard title="Receita Líquida" subtitle="Agência" icon={Scale} colorTheme="blue" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.receitaLiquidaAgencia)} />
+                                <KpiCard title="Despesas Fixas" icon={ArrowDownRight} colorTheme="red" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasFixas)} />
+                                <KpiCard title="Lucro Operacional" icon={DollarSign} colorTheme="dark" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.lucroOperacional)} />
                             </div>
 
-                            {/* PAINEL DE MARGENS % */}
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 flex flex-wrap gap-4 justify-between">
-                                <MarginCard title="Retenção Agência (Sobre VGC)" value={financialMetrics.margemRetencao} color="blue" />
-                                <MarginCard title="Margem de Lucro (Sobre VGC)" value={financialMetrics.margemLucro} color="emerald" />
+                            {/* MARGENS LINHA FINA */}
+                            <div className="bg-white p-3 rounded-xl shadow-sm border border-neutral-200 flex flex-wrap gap-4 justify-around items-center">
+                                <MarginCard title="Retenção Agência" value={financialMetrics.margemRetencao} color="blue" />
+                                <MarginCard title="Margem de Lucro" value={financialMetrics.margemLucro} color="emerald" />
                             </div>
 
-                            {/* GRÁFICOS SEPARADOS */}
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                                {/* GRÁFICO 1: ENTRADAS vs SAÍDAS (VOLUME) */}
-                                <div className="bg-white p-8 rounded-3xl shadow-sm border border-neutral-100 h-[450px]">
-                                    <div className="flex justify-between items-center mb-8">
-                                        <h3 className="font-extrabold text-xl text-neutral-800 flex items-center gap-3"><TrendingUp size={22} className="text-[#f9b410]" /> Entradas e Saídas (Volume)</h3>
-                                        <div className="flex gap-4 text-xs font-bold bg-neutral-50 px-3 py-1.5 rounded-lg border border-neutral-100">
-                                            <span className="flex items-center gap-1.5 text-emerald-600"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> Receitas</span>
-                                            <span className="flex items-center gap-1.5 text-rose-600"><div className="w-2.5 h-2.5 rounded-full bg-rose-500"></div> Despesas</span>
+                            {/* GRÁFICOS EM GRID COMPACTO */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                {/* GRÁFICO 1: VOLUME */}
+                                <div className="bg-white p-5 rounded-xl shadow-sm border border-neutral-200 h-[280px]">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="font-bold text-sm text-neutral-700 flex items-center gap-2"><TrendingUp size={16} className="text-[#f9b410]" /> Volume</h3>
+                                        <div className="flex gap-2 text-[10px] font-bold">
+                                            <span className="text-emerald-600">Receita</span>
+                                            <span className="text-rose-600">Despesa</span>
                                         </div>
                                     </div>
                                     <ResponsiveContainer width="100%" height="85%">
-                                        <BarChart data={chartData.flow} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
+                                        <BarChart data={chartData.flow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 12 }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 11 }} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(v)} />
-                                            <Tooltip
-                                                cursor={{ fill: 'transparent' }}
-                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}
-                                                formatter={(value, name) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value), name === 'receita' ? 'Receitas Total' : 'Despesas Total']}
-                                            />
-                                            <Bar dataKey="receita" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30} />
-                                            <Bar dataKey="despesa" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={30} />
+                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 10 }} dy={5} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 10 }} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(v)} />
+                                            <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', fontSize: '12px' }} formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} />
+                                            <Bar dataKey="receita" fill="#10b981" radius={[3, 3, 0, 0]} barSize={20} />
+                                            <Bar dataKey="despesa" fill="#f43f5e" radius={[3, 3, 0, 0]} barSize={20} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
 
-                                {/* GRÁFICO 2: SALDO LÍQUIDO MENSAL (BARRAS DE LUCRO/PREJUÍZO) */}
-                                <div className="bg-white p-8 rounded-3xl shadow-sm border border-neutral-100 h-[450px]">
-                                    <div className="flex justify-between items-center mb-8">
-                                        <h3 className="font-extrabold text-xl text-neutral-800 flex items-center gap-3"><DollarSign size={22} className="text-blue-500" /> Resultado Mensal (Lucro/Prejuízo)</h3>
+                                {/* GRÁFICO 2: RESULTADO */}
+                                <div className="bg-white p-5 rounded-xl shadow-sm border border-neutral-200 h-[280px]">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="font-bold text-sm text-neutral-700 flex items-center gap-2"><DollarSign size={16} className="text-blue-500" /> Resultado</h3>
                                     </div>
                                     <ResponsiveContainer width="100%" height="85%">
-                                        <BarChart data={chartData.flow} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
+                                        <BarChart data={chartData.flow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 12 }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 11 }} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(v)} />
-                                            <Tooltip
-                                                cursor={{ fill: 'transparent' }}
-                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}
-                                                formatter={(value) => [
-                                                    <span key="val" className={value >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-                                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
-                                                    </span>, 'Resultado'
-                                                ]}
-                                            />
-                                            <ReferenceLine y={0} stroke="#e5e5e5" strokeWidth={2} />
-                                            <Bar dataKey="saldo" radius={[4, 4, 0, 0]} barSize={40}>
+                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 10 }} dy={5} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 10 }} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(v)} />
+                                            <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', fontSize: '12px' }} formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} />
+                                            <ReferenceLine y={0} stroke="#e5e5e5" />
+                                            <Bar dataKey="saldo" radius={[3, 3, 0, 0]} barSize={30}>
                                                 {chartData.flow.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={entry.saldo >= 0 ? '#10b981' : '#ef4444'} />
                                                 ))}
@@ -506,15 +493,15 @@ export default function GestorFinanceiro() {
                                 </div>
 
                                 {/* GRÁFICO 3: DISTRIBUIÇÃO */}
-                                <div className="xl:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-neutral-100 h-[400px]">
-                                    <h3 className="font-extrabold text-xl text-neutral-800 mb-8 flex items-center gap-3"><FolderOpen size={22} className="text-indigo-500" /> Distribuição de Despesas</h3>
+                                <div className="bg-white p-5 rounded-xl shadow-sm border border-neutral-200 h-[280px]">
+                                    <h3 className="font-bold text-sm text-neutral-700 mb-4 flex items-center gap-2"><FolderOpen size={16} className="text-indigo-500" /> Categorias</h3>
                                     <ResponsiveContainer width="100%" height="85%">
                                         <PieChart>
-                                            <Pie data={chartData.pie} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={4} dataKey="value" cornerRadius={6}>
+                                            <Pie data={chartData.pie} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value">
                                                 {chartData.pie.map((e, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />)}
                                             </Pie>
-                                            <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} contentStyle={{ borderRadius: '12px' }} />
-                                            <Legend layout="horizontal" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '20px' }} />
+                                            <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} contentStyle={{ borderRadius: '8px', fontSize: '12px' }} />
+                                            <Legend layout="horizontal" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 </div>
