@@ -9,8 +9,8 @@ __turbopack_context__.s([
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = /*#__PURE__*/ __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$module$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/node_modules/@supabase/supabase-js/dist/module/index.js [app-client] (ecmascript) <locals>");
 ;
-const supabaseUrl = ("TURBOPACK compile-time value", "https://qxsjbtpcmeuzhqmpvtlp.supabase.co");
-const supabaseKey = ("TURBOPACK compile-time value", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4c2pidHBjbWV1emhxbXB2dGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NjEzNjksImV4cCI6MjA3OTEzNzM2OX0.x9LWXXW917Tbnoc86rrhrtTN3snKCZKg7qU0lwt-RqE");
+const supabaseUrl = ("TURBOPACK compile-time value", "https://ypmyoezewbyqtzdkbuxt.supabase.co");
+const supabaseKey = ("TURBOPACK compile-time value", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwbXlvZXpld2J5cXR6ZGtidXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNjM5NTYsImV4cCI6MjA3OTgzOTk1Nn0.KMBhg1E2oXvxoJ4-SHzkhCTH6ySML02GFxGJdNMttvc");
 const supabase = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$module$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["createClient"])(supabaseUrl, supabaseKey);
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);

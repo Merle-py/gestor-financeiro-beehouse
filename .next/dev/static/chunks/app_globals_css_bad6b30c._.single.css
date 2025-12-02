@@ -64,6 +64,10 @@
     --color-blue-100: #dbeafe;
     --color-blue-400: #54a2ff;
     --color-blue-600: #155dfc;
+<<<<<<< Updated upstream
+=======
+    --color-blue-800: #193cb8;
+>>>>>>> Stashed changes
     --color-indigo-50: #eef2ff;
     --color-indigo-300: #a4b3ff;
     --color-indigo-500: #625fff;
@@ -103,6 +107,10 @@
     --font-weight-extrabold: 800;
     --tracking-tight: -.025em;
     --tracking-wider: .05em;
+<<<<<<< Updated upstream
+=======
+    --leading-tight: 1.25;
+>>>>>>> Stashed changes
     --leading-snug: 1.375;
     --radius-md: .375rem;
     --radius-lg: .5rem;
@@ -138,6 +146,10 @@
       --color-blue-100: lab(92.0301% -2.24757 -11.6453);
       --color-blue-400: lab(65.0361% -1.42062 -56.9803);
       --color-blue-600: lab(44.0605% 29.0279 -86.0352);
+<<<<<<< Updated upstream
+=======
+      --color-blue-800: lab(30.2514% 27.7854 -70.2699);
+>>>>>>> Stashed changes
       --color-indigo-50: lab(95.4818% .411302 -6.78529);
       --color-indigo-300: lab(74.0235% 8.54138 -41.6075);
       --color-indigo-500: lab(48.295% 38.3129 -81.9673);
@@ -520,6 +532,13 @@
 
   .hidden {
     display: none;
+<<<<<<< Updated upstream
+=======
+  }
+
+  .table {
+    display: table;
+>>>>>>> Stashed changes
   }
 
   .table {
@@ -636,6 +655,10 @@
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
+  .grid-cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
   .flex-col {
     flex-direction: column;
   }
@@ -690,6 +713,13 @@
 
   .gap-5 {
     gap: calc(var(--spacing) * 5);
+<<<<<<< Updated upstream
+=======
+  }
+
+  .gap-6 {
+    gap: calc(var(--spacing) * 6);
+>>>>>>> Stashed changes
   }
 
   .gap-6 {
@@ -812,6 +842,13 @@
 
   .border-amber-400 {
     border-color: var(--color-amber-400);
+<<<<<<< Updated upstream
+=======
+  }
+
+  .border-blue-100 {
+    border-color: var(--color-blue-100);
+>>>>>>> Stashed changes
   }
 
   .border-blue-100 {
@@ -832,6 +869,10 @@
 
   .border-emerald-500 {
     border-color: var(--color-emerald-500);
+  }
+
+  .border-indigo-300 {
+    border-color: var(--color-indigo-300);
   }
 
   .border-indigo-300 {
@@ -912,6 +953,13 @@
 
   .bg-emerald-100 {
     background-color: var(--color-emerald-100);
+<<<<<<< Updated upstream
+=======
+  }
+
+  .bg-emerald-500 {
+    background-color: var(--color-emerald-500);
+>>>>>>> Stashed changes
   }
 
   .bg-emerald-500 {
@@ -920,6 +968,10 @@
 
   .bg-gray-100 {
     background-color: var(--color-gray-100);
+  }
+
+  .bg-indigo-50 {
+    background-color: var(--color-indigo-50);
   }
 
   .bg-indigo-50 {
@@ -1096,6 +1148,19 @@
     padding-top: calc(var(--spacing) * 1.5);
   }
 
+<<<<<<< Updated upstream
+  .pr-1 {
+    padding-right: calc(var(--spacing) * 1);
+=======
+  .pt-1\.5 {
+    padding-top: calc(var(--spacing) * 1.5);
+  }
+
+  .pt-2 {
+    padding-top: calc(var(--spacing) * 2);
+>>>>>>> Stashed changes
+  }
+
   .pr-1 {
     padding-right: calc(var(--spacing) * 1);
   }
@@ -1168,6 +1233,14 @@
   .leading-snug {
     --tw-leading: var(--leading-snug);
     line-height: var(--leading-snug);
+<<<<<<< Updated upstream
+=======
+  }
+
+  .leading-tight {
+    --tw-leading: var(--leading-tight);
+    line-height: var(--leading-tight);
+>>>>>>> Stashed changes
   }
 
   .font-bold {
@@ -1226,6 +1299,13 @@
 
   .text-emerald-700 {
     color: var(--color-emerald-700);
+<<<<<<< Updated upstream
+=======
+  }
+
+  .text-gray-400 {
+    color: var(--color-gray-400);
+>>>>>>> Stashed changes
   }
 
   .text-gray-500 {
@@ -1283,6 +1363,13 @@
 
   .opacity-0 {
     opacity: 0;
+<<<<<<< Updated upstream
+=======
+  }
+
+  .opacity-70 {
+    opacity: .7;
+>>>>>>> Stashed changes
   }
 
   .shadow-2xl {
@@ -1582,6 +1669,15 @@
   @media (min-width: 64rem) {
     .lg\:grid-cols-4 {
       grid-template-columns: repeat(4, minmax(0, 1fr));
+<<<<<<< Updated upstream
+=======
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .lg\:grid-cols-5 {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+>>>>>>> Stashed changes
     }
   }
 }
