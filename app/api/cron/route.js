@@ -25,7 +25,6 @@ async function gerarRecorrencias() {
     const hoje = new Date();
     const mesesParaGerar = [hoje, addMonths(hoje, 1)]; 
     const novosLancamentos = [];
-
     const { data: transacoesExistentes } = await supabase.from('transactions').select('*');
 
     for (const mesRef of mesesParaGerar) {
@@ -35,7 +34,6 @@ async function gerarRecorrencias() {
                 dataVencimento = lastDayOfMonth(mesRef);
             }
             const dataString = format(dataVencimento, 'yyyy-MM-dd');
-
             const jaExiste = transacoesExistentes.some(t => 
                 (t.recurring_rule_id === item.id && t.due_date === dataString) || 
                 (t.supplier_id === item.supplier_id && parseFloat(t.amount) === parseFloat(item.amount) && t.due_date === dataString)
@@ -95,11 +93,12 @@ async function enviarParaBitrix(hoje, futuro) {
         futuro.forEach(t => msg += `▪ ${t.description} - R$ ${t.amount}` + quebra);
     }
 
-    msg += "---------------------------------" + quebra + `[URL=https://${process.env.VERCEL_URL}]➡️ ABRIR GESTOR[/URL]`;
+    msg += "---------------------------------" + quebra + `[URL=https://viver.bitrix24.com.br/marketplace/app/199/]➡️ ABRIR GESTOR[/URL]`;
 
     const webhookUrl = process.env.BITRIX_WEBHOOK_URL + "im.message.add";
     await fetch(webhookUrl, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ "DIALOG_ID": process.env.ID_COLABORADOR_FINANCEIRO, "MESSAGE": msg, "SYSTEM": "Y" })
     });
 }
