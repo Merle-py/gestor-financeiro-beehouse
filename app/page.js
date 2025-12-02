@@ -7,7 +7,7 @@ import {
     ArrowUpRight, ArrowDownRight, AlertTriangle, Calendar, X,
     List, Kanban as KanbanIcon, Check, Menu, ChevronLeft, TrendingUp, DollarSign,
     Repeat, RefreshCw, Briefcase, Wallet, FileText, AlertCircle, Ban, Gift, Calculator, Lock, PieChart as PieIcon,
-    Building2, FolderOpen, Activity, CalendarDays, MoreHorizontal, Percent, AreaChart, TrendingDown
+    Building2, FolderOpen, Activity, CalendarDays, MoreHorizontal, Percent, TrendingDown, Scale
 } from 'lucide-react'
 import {
     format, isWithinInterval, parseISO, isValid, differenceInCalendarDays, startOfDay, setDate, lastDayOfMonth, isSameDay, isBefore
@@ -71,7 +71,7 @@ const KpiCard = ({ title, value, subtitle, icon: Icon, colorTheme }) => {
         orange: 'bg-orange-50 text-orange-600',
         red: 'bg-rose-50 text-rose-600',
         purple: 'bg-purple-50 text-purple-600',
-        dark: 'bg-neutral-900 text-white'
+        dark: 'bg-neutral-800 text-white'
     }
     const theme = themes[colorTheme] || themes.blue;
 
@@ -81,7 +81,7 @@ const KpiCard = ({ title, value, subtitle, icon: Icon, colorTheme }) => {
                 <div className={`p-3 rounded-xl ${theme} shadow-sm`}>
                     <Icon size={24} strokeWidth={2} />
                 </div>
-                {subtitle && <span className="text-[10px] font-bold uppercase tracking-wide bg-neutral-50 text-neutral-500 px-2 py-1 rounded-full truncate max-w-[120px]" title={subtitle}>{subtitle}</span>}
+                {subtitle && <span className="text-[10px] font-bold uppercase tracking-wide bg-neutral-50 text-neutral-500 px-2 py-1 rounded-full truncate max-w-[140px]" title={subtitle}>{subtitle}</span>}
             </div>
             <div>
                 <h4 className="text-neutral-500 text-[11px] font-bold uppercase tracking-wider mb-1 truncate" title={title}>{title}</h4>
@@ -99,7 +99,7 @@ const MarginCard = ({ title, value, color }) => {
     }
     const theme = colors[color] || colors.blue;
     return (
-        <div className={`flex-1 p-4 rounded-xl border ${theme} flex flex-col items-center justify-center`}>
+        <div className={`flex-1 p-4 rounded-xl border ${theme} flex flex-col items-center justify-center min-w-[150px]`}>
             <span className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-1">{title}</span>
             <span className="text-2xl font-extrabold tracking-tight flex items-center gap-1">
                 <Percent size={18} className="opacity-50" />
@@ -214,32 +214,33 @@ export default function GestorFinanceiro() {
         })
     }, [transactions, filters])
 
-    // --- CÁLCULOS FINANCEIROS CORRIGIDOS (TERMINOLOGIA) ---
+    // --- CÁLCULOS FINANCEIROS (ADAPTADO PARA IMOBILIÁRIA) ---
     const financialMetrics = useMemo(() => {
         const data = filteredTransactions.filter(t => t.status !== 'Cancelado');
 
-        // ROB: Receita Operacional Bruta (Total de entradas)
-        const rob = data.filter(t => t.type === 'receita').reduce((acc, t) => acc + Number(t.amount), 0);
+        // VGC: Valor Geral de Comissão (Entrada Bruta)
+        const vgc = data.filter(t => t.type === 'receita').reduce((acc, t) => acc + Number(t.amount), 0);
 
-        // Deduções: Custos Variáveis (Comissões, Impostos sobre venda) - Vínculo com venda
-        const deducoes = data.filter(t => t.type === 'despesa' && t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
+        // Repasses: Comissões de terceiros + Impostos de Notas (Custos Diretos)
+        const repasses = data.filter(t => t.type === 'despesa' && t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
 
-        // Margem de Contribuição (MC) = ROB - Deduções
-        const margemContribuicao = rob - deducoes;
+        // Receita Líquida da Agência (O que sobra na casa)
+        const receitaLiquidaAgencia = vgc - repasses;
 
-        // Despesas Operacionais (Fixas) - Sem vínculo com venda
-        const opex = data.filter(t => t.type === 'despesa' && !t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
+        // Despesas Operacionais (Fixas: Aluguel, Luz, Sistemas)
+        const despesasFixas = data.filter(t => t.type === 'despesa' && !t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
 
-        // Resultado Líquido (EBITDA aproximado neste modelo simples)
-        const resultadoLiquido = margemContribuicao - opex;
+        // Lucro Operacional
+        const lucroOperacional = receitaLiquidaAgencia - despesasFixas;
 
         // Margens %
-        const margemBrutaPercent = rob > 0 ? ((rob - deducoes) / rob) * 100 : 0; // Considerando MC como Margem Bruta neste contexto simplificado
-        const margemEbitdaPercent = rob > 0 ? (resultadoLiquido / rob) * 100 : 0;
-        // Margem líquida seria igual a EBITDA aqui pois não temos IR/CSLL e resultado financeiro abaixo da linha operacional ainda.
-        const margemLiquidaPercent = margemEbitdaPercent;
+        // Margem de Retenção (Quanto fica na imobiliária após pagar corretores/impostos)
+        const margemRetencao = vgc > 0 ? (receitaLiquidaAgencia / vgc) * 100 : 0;
 
-        return { rob, deducoes, opex, margemContribuicao, resultadoLiquido, margemBrutaPercent, margemEbitdaPercent, margemLiquidaPercent };
+        // Margem de Lucro (Quanto sobra no final)
+        const margemLucro = vgc > 0 ? (lucroOperacional / vgc) * 100 : 0;
+
+        return { vgc, repasses, receitaLiquidaAgencia, despesasFixas, lucroOperacional, margemRetencao, margemLucro };
     }, [filteredTransactions]);
 
     const chartData = useMemo(() => {
@@ -252,8 +253,13 @@ export default function GestorFinanceiro() {
                 const k = format(date, 'MMM/yy', { locale: ptBR });
                 if (!flux[k]) flux[k] = { name: k, receita: 0, despesa: 0, saldo: 0, date: startOfDay(date).getTime() };
                 const val = Number(t.amount);
-                if (t.type === 'receita') { flux[k].receita += val; flux[k].saldo += val; }
-                else { flux[k].despesa += val; flux[k].saldo -= val; }
+                if (t.type === 'receita') {
+                    flux[k].receita += val;
+                    flux[k].saldo += val;
+                } else {
+                    flux[k].despesa += val;
+                    flux[k].saldo -= val;
+                }
             }
         })
         const sortedFlux = Object.values(flux).sort((a, b) => a.date - b.date);
@@ -428,20 +434,19 @@ export default function GestorFinanceiro() {
                         <div className="w-full max-w-[98%] mx-auto space-y-8 pb-8">
                             <FilterBar filters={filters} setFilters={setFilters} categories={categories} suppliers={suppliers} dateResetKey={dateResetKey} setDateResetKey={setDateResetKey} />
 
-                            {/* KPI CARDS - TERMINOLOGIA CORRIGIDA */}
+                            {/* KPI CARDS - TERMINOLOGIA IMOBILIÁRIA */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                                <KpiCard title="Receita Operacional Bruta (ROB)" icon={ArrowUpRight} colorTheme="green" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.rob)} />
-                                <KpiCard title="Deduções & Custos Variáveis" subtitle="Impostos / Comissões" icon={Tag} colorTheme="orange" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.deducoes)} />
-                                <KpiCard title="Margem de Contribuição (MC)" subtitle="ROB - Deduções" icon={Activity} colorTheme="blue" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.margemContribuicao)} />
-                                <KpiCard title="Despesas Operacionais (Fixas)" subtitle="Sem vínculo com vendas" icon={ArrowDownRight} colorTheme="red" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.opex)} />
-                                <KpiCard title="Resultado Líquido (EBITDA Aprox.)" subtitle="MC - Despesas Fixas" icon={DollarSign} colorTheme="dark" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.resultadoLiquido)} />
+                                <KpiCard title="VGC Total (Entrada Bruta)" icon={ArrowUpRight} colorTheme="green" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.vgc)} />
+                                <KpiCard title="Repasses (Corretores/Impostos)" subtitle="Custo Variável" icon={Tag} colorTheme="orange" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.repasses)} />
+                                <KpiCard title="Receita Líquida da Agência" subtitle="Após Repasses" icon={Scale} colorTheme="blue" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.receitaLiquidaAgencia)} />
+                                <KpiCard title="Despesas Fixas (Operacional)" subtitle="Aluguel, Luz, etc." icon={ArrowDownRight} colorTheme="red" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasFixas)} />
+                                <KpiCard title="Lucro/Prejuízo Operacional" subtitle="Resultado Final" icon={DollarSign} colorTheme="dark" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.lucroOperacional)} />
                             </div>
 
                             {/* PAINEL DE MARGENS % */}
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 flex flex-wrap gap-4 justify-between">
-                                <MarginCard title="Margem Bruta (MC/ROB)" value={financialMetrics.margemBrutaPercent} color="blue" />
-                                <MarginCard title="Margem EBITDA" value={financialMetrics.margemEbitdaPercent} color="indigo" />
-                                <MarginCard title="Margem Líquida" value={financialMetrics.margemLiquidaPercent} color="emerald" />
+                                <MarginCard title="Retenção Agência (Sobre VGC)" value={financialMetrics.margemRetencao} color="blue" />
+                                <MarginCard title="Margem de Lucro (Sobre VGC)" value={financialMetrics.margemLucro} color="emerald" />
                             </div>
 
                             {/* GRÁFICOS SEPARADOS */}
@@ -466,25 +471,18 @@ export default function GestorFinanceiro() {
                                                 formatter={(value, name) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value), name === 'receita' ? 'Receitas Total' : 'Despesas Total']}
                                             />
                                             <Bar dataKey="receita" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30} />
-                                            {/* Usando valor absoluto para despesa para mostrar volume positivo */}
                                             <Bar dataKey="despesa" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={30} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
 
-                                {/* GRÁFICO 2: SALDO LÍQUIDO MENSAL */}
+                                {/* GRÁFICO 2: SALDO LÍQUIDO MENSAL (BARRAS DE LUCRO/PREJUÍZO) */}
                                 <div className="bg-white p-8 rounded-3xl shadow-sm border border-neutral-100 h-[450px]">
                                     <div className="flex justify-between items-center mb-8">
-                                        <h3 className="font-extrabold text-xl text-neutral-800 flex items-center gap-3"><DollarSign size={22} className="text-blue-500" /> Resultado Mensal de Caixa</h3>
+                                        <h3 className="font-extrabold text-xl text-neutral-800 flex items-center gap-3"><DollarSign size={22} className="text-blue-500" /> Resultado Mensal (Lucro/Prejuízo)</h3>
                                     </div>
                                     <ResponsiveContainer width="100%" height="85%">
-                                        <AreaChart data={chartData.flow} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
-                                            <defs>
-                                                <linearGradient id="colorSaldo" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
+                                        <BarChart data={chartData.flow} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 12 }} dy={10} />
                                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 11 }} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(v)} />
@@ -492,18 +490,22 @@ export default function GestorFinanceiro() {
                                                 cursor={{ fill: 'transparent' }}
                                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}
                                                 formatter={(value) => [
-                                                    <span key="val" className={value >= 0 ? 'text-blue-600 font-bold' : 'text-rose-600 font-bold'}>
+                                                    <span key="val" className={value >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
                                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
-                                                    </span>, 'Saldo Líquido'
+                                                    </span>, 'Resultado'
                                                 ]}
                                             />
                                             <ReferenceLine y={0} stroke="#e5e5e5" strokeWidth={2} />
-                                            <Area type="monotone" dataKey="saldo" stroke="#3b82f6" strokeWidth={3} fill="url(#colorSaldo)" dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
-                                        </AreaChart>
+                                            <Bar dataKey="saldo" radius={[4, 4, 0, 0]} barSize={40}>
+                                                {chartData.flow.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.saldo >= 0 ? '#10b981' : '#ef4444'} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
                                     </ResponsiveContainer>
                                 </div>
 
-                                {/* GRÁFICO 3: DISTRIBUIÇÃO (MANTIDO PARA COMPOR A GRID) */}
+                                {/* GRÁFICO 3: DISTRIBUIÇÃO */}
                                 <div className="xl:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-neutral-100 h-[400px]">
                                     <h3 className="font-extrabold text-xl text-neutral-800 mb-8 flex items-center gap-3"><FolderOpen size={22} className="text-indigo-500" /> Distribuição de Despesas</h3>
                                     <ResponsiveContainer width="100%" height="85%">
