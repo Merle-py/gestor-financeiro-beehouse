@@ -396,7 +396,7 @@ export default function GestorFinanceiro() {
 
     return (
         <div className="flex h-screen overflow-hidden bg-[#fafafa] text-neutral-800 font-sans selection:bg-yellow-100">
-            <aside className={`fixed top-0 left-0 h-full bg-white border-r border-neutral-100 z-30 transition-all duration-300 ease-in-out flex flex-col shadow-xl shadow-neutral-200/50 ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
+            <aside className={`fixed top-0 left-0 h-full bg-black border-r border-neutral-100 z-30 transition-all duration-300 ease-in-out flex flex-col shadow-xl shadow-neutral-200/50 ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
                 <div className="p-6 flex justify-between items-center h-20 border-b border-neutral-50">
                     <img src="https://www.beehouse.imb.br/assets/img/lay/logo-nov2025.svg?c=1" alt="Beehouse" className="w-32 object-contain" />
                     <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-neutral-400"><ChevronLeft size={20} /></button>
