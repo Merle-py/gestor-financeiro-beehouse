@@ -7,7 +7,7 @@ import {
     ArrowUpRight, ArrowDownRight, AlertTriangle, Calendar, X,
     List, Kanban as KanbanIcon, Check, Menu, ChevronLeft, TrendingUp, DollarSign,
     Repeat, RefreshCw, Briefcase, Wallet, FileText, AlertCircle, Ban, Gift, Calculator, Lock, PieChart as PieIcon,
-    Building2, FolderOpen, Activity, CalendarDays, MoreHorizontal, Percent, TrendingDown, Scale, ArrowRightLeft, FileWarning
+    Building2, FolderOpen, Activity, CalendarDays, MoreHorizontal, Percent, TrendingDown, Scale, ArrowRightLeft
 } from 'lucide-react'
 import {
     format, isWithinInterval, parseISO, isValid, differenceInCalendarDays, startOfDay, setDate, lastDayOfMonth, isSameDay, isBefore
@@ -352,6 +352,7 @@ export default function GestorFinanceiro() {
             if (modalType === 'transaction') {
                 const today = new Date().toISOString().split('T')[0]
                 let finalStatus = formData.status
+                // Se o usuário preencheu a data de pagamento, status vira 'Pago'
                 if (formData.nf_received_date) finalStatus = 'Pago';
                 else if (formData.status !== 'Pago' && formData.status !== 'Cancelado') {
                     if (formData.due_date < today) finalStatus = 'Vencido'
@@ -562,7 +563,6 @@ export default function GestorFinanceiro() {
                                                 ]}
                                             />
                                             <ReferenceLine y={0} stroke="#e5e5e5" />
-                                            {/* dataKey como função para forçar valor absoluto (barra para cima) */}
                                             <Bar dataKey={(entry) => Math.abs(entry.saldo)} radius={[3, 3, 0, 0]} barSize={30}>
                                                 {chartData.flow.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={entry.saldo >= 0 ? '#10b981' : '#ef4444'} />
@@ -572,21 +572,23 @@ export default function GestorFinanceiro() {
                                     </ResponsiveContainer>
                                 </div>
 
-                                {/* GRÁFICO 3: DISTRIBUIÇÃO POR CATEGORIA */}
+                                {/* GRÁFICO 3: DISTRIBUIÇÃO POR CATEGORIA (2 DONUTS LADO A LADO) */}
                                 <div className="bg-white p-5 rounded-xl shadow-sm border border-neutral-200 h-[280px] flex flex-col">
-                                    <h3 className="font-bold text-sm text-neutral-700 mb-2 flex items-center gap-2"><FolderOpen size={16} className="text-indigo-500" /> Por Categoria</h3>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h3 className="font-bold text-sm text-neutral-700 flex items-center gap-2"><FolderOpen size={16} className="text-indigo-500" /> Por Categoria</h3>
+                                    </div>
                                     <div className="flex-1 flex gap-4">
                                         {/* Receitas */}
                                         <div className="flex-1 flex flex-col items-center relative">
-                                            <span className="text-[10px] font-bold uppercase text-emerald-600 mb-1">Receitas</span>
+                                            <span className="text-[10px] font-bold uppercase text-emerald-600 mb-1 border-b border-emerald-100 pb-0.5">Receitas</span>
                                             <div className="w-full h-full">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <PieChart>
-                                                        <Pie data={chartData.pieIncome} cx="50%" cy="55%" innerRadius={30} outerRadius={50} paddingAngle={2} dataKey="value">
+                                                        <Pie data={chartData.pieIncome} cx="50%" cy="50%" innerRadius={25} outerRadius={45} paddingAngle={3} dataKey="value">
                                                             {chartData.pieIncome.map((e, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />)}
                                                         </Pie>
                                                         <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(value)} contentStyle={{ borderRadius: '8px', fontSize: '10px' }} />
-                                                        <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px' }} />
+                                                        <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', lineHeight: '10px' }} />
                                                     </PieChart>
                                                 </ResponsiveContainer>
                                             </div>
@@ -594,15 +596,15 @@ export default function GestorFinanceiro() {
 
                                         {/* Despesas */}
                                         <div className="flex-1 flex flex-col items-center relative">
-                                            <span className="text-[10px] font-bold uppercase text-rose-600 mb-1">Despesas</span>
+                                            <span className="text-[10px] font-bold uppercase text-rose-600 mb-1 border-b border-rose-100 pb-0.5">Despesas</span>
                                             <div className="w-full h-full">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <PieChart>
-                                                        <Pie data={chartData.pieExpense} cx="50%" cy="55%" innerRadius={30} outerRadius={50} paddingAngle={2} dataKey="value">
+                                                        <Pie data={chartData.pieExpense} cx="50%" cy="50%" innerRadius={25} outerRadius={45} paddingAngle={3} dataKey="value">
                                                             {chartData.pieExpense.map((e, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />)}
                                                         </Pie>
                                                         <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(value)} contentStyle={{ borderRadius: '8px', fontSize: '10px' }} />
-                                                        <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px' }} />
+                                                        <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px', lineHeight: '10px' }} />
                                                     </PieChart>
                                                 </ResponsiveContainer>
                                             </div>
@@ -610,6 +612,65 @@ export default function GestorFinanceiro() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'vendas' && (
+                        <div className="w-full max-w-[98%] mx-auto pb-8">
+                            {/* ESTADO VAZIO: Se não houver vendas, mostra mensagem. Se houver, mostra GRID. */}
+                            {sales.length === 0 ? (
+                                <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-neutral-300 mt-4">
+                                    <AlertCircle className="mx-auto h-12 w-12 text-neutral-300 mb-4" />
+                                    <h3 className="text-lg font-medium text-neutral-900">Nenhuma venda registrada</h3>
+                                    <p className="text-neutral-500 text-sm mt-1 mb-6">Clique em "Nova Venda" para começar a gerenciar suas comissões.</p>
+                                    <button onClick={() => openModal('sale')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-6 py-2.5 rounded-xl font-bold text-sm inline-flex items-center gap-2 shadow-sm transition-all"><Plus size={18} /> Nova Venda</button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {sales.map(sale => {
+                                        const stats = calculateSaleTotals(sale, transactions);
+                                        const percent = stats.totalHonorarios > 0 ? (stats.recebidoTotal / stats.totalHonorarios) * 100 : 0;
+                                        const hasPendingCommission = transactions.some(t => t.sale_id === sale.id && t.description.includes('Comissão') && t.status === 'Aberto');
+                                        const showAlert = stats.recebidoTotal > 0 && hasPendingCommission;
+
+                                        return (
+                                            <div key={sale.id} className={`bg-white rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between ${showAlert ? 'border-l-4 border-l-yellow-400' : 'border-neutral-200'}`}>
+                                                <div>
+                                                    <div className="flex justify-between items-start mb-6">
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => openModal('sale', sale)} className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition" title="Editar Venda"><Edit size={16} /></button>
+                                                            <button onClick={() => handleDelete(sale.id, 'sales')} className="text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition" title="Excluir Venda"><Trash2 size={16} /></button>
+                                                        </div>
+                                                        <div className="text-right"><span className="bg-neutral-100 text-neutral-600 px-2 py-1 rounded text-[10px] font-bold uppercase block mb-1">Ativo</span></div>
+                                                    </div>
+
+                                                    {showAlert && <div className="mb-4 flex items-center gap-2 text-xs font-bold text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded-lg w-fit"><AlertCircle size={14} /> Comissão Pendente</div>}
+                                                    <div className="mb-6">
+                                                        <h3 className="font-bold text-xl text-neutral-900 leading-tight">{sale.property_info}</h3>
+                                                        <p className="text-sm text-neutral-500 mt-1">{sale.client_name}</p>
+                                                        <p className="text-[10px] font-bold text-neutral-400 mt-2">Corretor: {sale.suppliers?.name?.split(' ')[0] || 'N/A'}</p>
+                                                    </div>
+
+                                                    <div className="space-y-4 mb-6">
+                                                        <div className="p-3 bg-neutral-50 rounded-xl">
+                                                            <div className="flex justify-between text-xs mb-2"><span className="text-neutral-500 font-bold uppercase">Recebido</span><span className="font-bold text-emerald-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.recebidoTotal)} <span className="text-neutral-400 font-normal">/ {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(stats.totalHonorarios)}</span></span></div>
+                                                            <div className="w-full bg-neutral-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full transition-all duration-500" style={{ width: `${Math.min(percent, 100)}%` }}></div></div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-dashed border-neutral-100">
+                                                            <div><p className="text-neutral-400">Comissão Paga</p><p className="font-bold text-neutral-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.comissaoPaga)}</p></div>
+                                                            <div className="text-right"><p className="text-neutral-400">Impostos Pagos</p><p className="font-bold text-neutral-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.impostosPagos)}</p></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => openModal('installment', sale)} className="flex-1 bg-neutral-900 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-black transition shadow-lg shadow-neutral-200">Lançar Recebimento</button>
+                                                    <button onClick={() => openModal('bonus', sale)} className="px-4 bg-yellow-100 text-yellow-700 rounded-xl hover:bg-yellow-200 transition" title="Adicionar Bônus"><Gift size={18} /></button>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -828,7 +889,11 @@ export default function GestorFinanceiro() {
                             <div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Descrição</label><input className="w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] focus:border-transparent transition-all" defaultValue={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4"><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Valor</label><input type="number" step="0.01" className="w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all" defaultValue={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} /></div><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Vencimento</label><input type="date" className="w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all" defaultValue={formData.due_date} onChange={e => setFormData({ ...formData, due_date: e.target.value })} /></div></div>
 
-                            {/* Bloco de NF Removido */}
+                            {/* Bloco de Pagamento/Recebimento Restaurado */}
+                            <div className="bg-neutral-50 p-3 rounded-lg border border-neutral-200">
+                                <p className="text-[10px] font-bold text-neutral-500 uppercase mb-2 flex items-center gap-1"><FileText size={12} /> Dados de Baixa</p>
+                                <div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Data de {formData.type_trans === 'receita' ? 'Recebimento' : 'Pagamento'}</label><input type="date" className="w-full border p-2 rounded text-sm" defaultValue={formData.nf_received_date} onChange={e => setFormData({ ...formData, nf_received_date: e.target.value })} /><p className="text-[9px] text-neutral-400 mt-1">*Preencher isso marca a conta como {formData.type_trans === 'receita' ? 'Paga/Recebida' : 'Paga'}.</p></div>
+                            </div>
 
                             <div className="grid grid-cols-2 gap-4"><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Entidade (Favorecido)</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.supplier_id} onChange={e => setFormData({ ...formData, supplier_id: e.target.value })}><option value="">Selecione...</option>{suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Plano de Contas</label><select className="w-full border border-neutral-200 rounded-lg p-2.5 bg-white outline-none focus:ring-2 focus:ring-[#f9b410]" defaultValue={formData.category_id} onChange={e => setFormData({ ...formData, category_id: e.target.value })}><option value="">Selecione...</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div></div><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Status Inicial</label><div className="flex gap-2"><button onClick={() => setFormData({ ...formData, status: 'Aberto' })} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Aberto' ? 'bg-neutral-800 text-white border-neutral-800 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>Aberto</button><button onClick={() => setFormData({ ...formData, status: 'Pago' })} className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-all ${formData.status === 'Pago' ? 'bg-emerald-500 text-white border-emerald-500 shadow-md' : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}>{formData.type_trans === 'receita' ? 'Recebido' : 'Pago'}</button></div></div>
                         </>
