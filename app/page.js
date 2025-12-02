@@ -7,7 +7,7 @@ import {
     ArrowUpRight, ArrowDownRight, AlertTriangle, Calendar, X,
     List, Kanban as KanbanIcon, Check, Menu, ChevronLeft, TrendingUp, DollarSign,
     Repeat, RefreshCw, Briefcase, Wallet, FileText, AlertCircle, Ban, Gift, Calculator, Lock, PieChart as PieIcon,
-    Building2, FolderOpen, Activity, CalendarDays, MoreHorizontal, Percent, TrendingDown
+    Building2, FolderOpen, Activity, CalendarDays, MoreHorizontal, Percent, AreaChart, TrendingDown
 } from 'lucide-react'
 import {
     format, isWithinInterval, parseISO, isValid, differenceInCalendarDays, startOfDay, setDate, lastDayOfMonth, isSameDay, isBefore
