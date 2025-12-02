@@ -17,6 +17,16 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LabelList, ComposedChart, Line, Area, ReferenceLine
 } from 'recharts'
 
+// --- CONSTANTES ---
+const tabNames = {
+    'dashboard': 'Visão Geral',
+    'vendas': 'Vendas & Comissões',
+    'lancamentos': 'Lançamentos',
+    'recorrencias': 'Despesas Fixas',
+    'fornecedores': 'Entidades',
+    'categorias': 'Plano de Contas'
+};
+
 // --- COMPONENTES AUXILIARES ---
 
 const FilterBar = ({ filters, setFilters, categories, suppliers, dateResetKey, setDateResetKey, showDates = true, showStatus = true }) => (
@@ -446,7 +456,7 @@ export default function GestorFinanceiro() {
 
             <main className={`flex-1 flex flex-col h-full transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
                 <header className="h-16 bg-white/90 backdrop-blur-md px-6 md:px-8 flex justify-between items-center flex-shrink-0 sticky top-0 z-10 border-b border-neutral-200 shadow-sm">
-                    <div className="flex items-center gap-4"><button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-xl hover:bg-neutral-100 text-neutral-500 transition-colors"><Menu size={20} /></button><h1 className="text-lg font-bold text-neutral-800 tracking-tight capitalize">{activeTab === 'recorrencias' ? 'Despesas Fixas' : activeTab === 'fornecedores' ? 'Entidades' : activeTab === 'categorias' ? 'Plano de Contas' : activeTab}</h1></div>
+                    <div className="flex items-center gap-4"><button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-xl hover:bg-neutral-100 text-neutral-500 transition-colors"><Menu size={20} /></button><h1 className="text-lg font-bold text-neutral-800 tracking-tight capitalize">{tabNames[activeTab]}</h1></div>
                     <div className="flex gap-2 md:gap-3">
                         {activeTab === 'vendas' && <button onClick={() => openModal('sale')} className="bg-[#f9b410] hover:bg-[#e0a20e] text-neutral-900 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 shadow-sm transition-all hover:scale-105 active:scale-95"><Plus size={16} /> Nova Venda</button>}
                         {activeTab === 'lancamentos' && (<div className="bg-white border border-neutral-200 rounded-lg p-1 flex shadow-sm"><button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-neutral-100 text-black' : 'text-neutral-400 hover:text-neutral-600'}`}><List size={16} /></button><button onClick={() => setViewMode('kanban')} className={`p-1.5 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-neutral-100 text-black' : 'text-neutral-400 hover:text-neutral-600'}`}><KanbanIcon size={16} /></button></div>)}
