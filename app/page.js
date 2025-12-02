@@ -14,7 +14,7 @@ import {
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LabelList, ComposedChart, Line, Area
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LabelList, ComposedChart, Line, Area, ReferenceLine
 } from 'recharts'
 
 // --- COMPONENTES AUXILIARES ---
@@ -228,22 +228,25 @@ export default function GestorFinanceiro() {
 
         filteredTransactions.forEach(t => {
             if (t.status === 'Cancelado') return;
-            // Pie
+            // Pie - Categorias (Absoluto)
             if (t.type === 'despesa') {
                 const cat = t.categories?.name || 'Outros';
                 catTotals[cat] = (catTotals[cat] || 0) + Number(t.amount);
             }
-            // Fluxo
+            // Fluxo - Divergente
             const date = parseISO(t.due_date);
             if (isValid(date)) {
                 const k = format(date, 'MMM/yy', { locale: ptBR });
                 if (!flux[k]) flux[k] = { name: k, receita: 0, despesa: 0, saldo: 0, date: startOfDay(date).getTime() };
+
                 if (t.type === 'receita') {
-                    flux[k].receita += Number(t.amount);
-                    flux[k].saldo += Number(t.amount);
+                    const val = Number(t.amount);
+                    flux[k].receita += val;
+                    flux[k].saldo += val;
                 } else {
-                    flux[k].despesa += Number(t.amount);
-                    flux[k].saldo -= Number(t.amount);
+                    const val = Number(t.amount);
+                    flux[k].despesa -= val; // NEGATIVO PARA BARRAS PARA BAIXO
+                    flux[k].saldo -= val;
                 }
             }
         })
@@ -427,7 +430,7 @@ export default function GestorFinanceiro() {
                         <div className="w-full max-w-[98%] mx-auto space-y-8">
                             <FilterBar filters={filters} setFilters={setFilters} categories={categories} suppliers={suppliers} dateResetKey={dateResetKey} setDateResetKey={setDateResetKey} />
 
-                            {/* KPI CARDS REDESIGNED */}
+                            {/* KPI CARDS */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                                 <KpiCard title="Receita Bruta" icon={ArrowUpRight} colorTheme="green" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.receitaBruta)} />
                                 <KpiCard title="Custos Variáveis" subtitle="Impostos & Comissões" icon={Tag} colorTheme="orange" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.custosVariaveis)} />
@@ -440,21 +443,38 @@ export default function GestorFinanceiro() {
                             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                                 <div className="xl:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-neutral-100 h-[480px]">
                                     <div className="flex justify-between items-center mb-8">
-                                        <h3 className="font-extrabold text-xl text-neutral-800 flex items-center gap-3"><TrendingUp size={22} className="text-[#f9b410]" /> Fluxo de Caixa</h3>
-                                        <div className="flex gap-2 text-xs font-bold"><span className="flex items-center gap-1 text-emerald-600"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Receita</span><span className="flex items-center gap-1 text-red-600"><div className="w-2 h-2 rounded-full bg-red-500"></div> Despesa</span></div>
+                                        <h3 className="font-extrabold text-xl text-neutral-800 flex items-center gap-3"><TrendingUp size={22} className="text-[#f9b410]" /> Fluxo de Caixa (Entradas vs Saídas)</h3>
+                                        <div className="flex gap-4 text-xs font-bold bg-neutral-50 px-3 py-1.5 rounded-lg border border-neutral-100">
+                                            <span className="flex items-center gap-1.5 text-emerald-600"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> Receita</span>
+                                            <span className="flex items-center gap-1.5 text-rose-600"><div className="w-2.5 h-2.5 rounded-full bg-rose-500"></div> Despesa</span>
+                                            <span className="flex items-center gap-1.5 text-blue-600"><div className="w-2.5 h-1 bg-blue-600 rounded-full"></div> Saldo</span>
+                                        </div>
                                     </div>
                                     <ResponsiveContainer width="100%" height="85%">
-                                        <ComposedChart data={chartData.flow} margin={{ top: 20, right: 30, left: 20, bottom: 0 }}>
+                                        <ComposedChart data={chartData.flow} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                                             <defs>
-                                                <linearGradient id="colorSaldo" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} /><stop offset="95%" stopColor="#3b82f6" stopOpacity={0} /></linearGradient>
+                                                <linearGradient id="colorSaldo" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} /><stop offset="95%" stopColor="#3b82f6" stopOpacity={0} /></linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 12 }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 12 }} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(v)} />
-                                            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} />
-                                            <Bar dataKey="receita" fill="#10b981" radius={[6, 6, 0, 0]} barSize={16} />
-                                            <Bar dataKey="despesa" fill="#ef4444" radius={[6, 6, 0, 0]} barSize={16} />
-                                            <Area type="monotone" dataKey="saldo" stroke="#3b82f6" fillOpacity={1} fill="url(#colorSaldo)" strokeWidth={3} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 11 }} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(Math.abs(v))} />
+                                            <Tooltip
+                                                cursor={{ fill: 'transparent' }}
+                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}
+                                                formatter={(value, name) => [
+                                                    <span key="val" className={value >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+                                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.abs(value))}
+                                                    </span>,
+                                                    name === 'receita' ? 'Receita' : name === 'despesa' ? 'Despesa' : 'Saldo Líquido'
+                                                ]}
+                                            />
+                                            <ReferenceLine y={0} stroke="#e5e5e5" strokeWidth={2} />
+                                            {/* Receitas (Positivas) */}
+                                            <Bar dataKey="receita" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
+                                            {/* Despesas (Negativas) */}
+                                            <Bar dataKey="despesa" fill="#f43f5e" radius={[0, 0, 4, 4]} barSize={20} />
+                                            {/* Linha de Saldo */}
+                                            <Line type="monotone" dataKey="saldo" stroke="#3b82f6" strokeWidth={3} dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }} activeDot={{ r: 6 }} />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -545,7 +565,6 @@ export default function GestorFinanceiro() {
                                         </table>
                                     </div>
                                 ) : (
-                                    // KANBAN VIEW COM CARDS DETALHADOS
                                     <div className="h-full overflow-x-auto">
                                         <div className="grid grid-cols-5 gap-4 h-full pb-4 min-w-[1400px]">
                                             {Object.entries(kanbanColumns).map(([key, col]) => (
@@ -557,7 +576,6 @@ export default function GestorFinanceiro() {
                                                     <div className="p-3 flex-1 overflow-y-auto space-y-3 custom-scrollbar">
                                                         {col.items.map(t => (
                                                             <div key={t.id} onClick={() => openModal('transaction', t)} className="bg-white p-4 rounded-xl shadow-sm border border-neutral-200 hover:shadow-md hover:border-blue-300 cursor-pointer transition-all group relative">
-                                                                {/* Category Badge */}
                                                                 <div className="absolute top-3 right-3 text-[9px] font-bold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-full uppercase tracking-wide">
                                                                     {t.categories?.name}
                                                                 </div>
@@ -575,7 +593,6 @@ export default function GestorFinanceiro() {
                                                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}
                                                                     </span>
 
-                                                                    {/* Quick Actions on Hover */}
                                                                     {(t.status === 'Aberto' || t.status === 'Vencido') && (
                                                                         <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                                                                             <button onClick={() => updateStatus(t.id, 'Pago')} className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition" title="Pagar"><Check size={14} /></button>
