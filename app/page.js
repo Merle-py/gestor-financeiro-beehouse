@@ -7,7 +7,7 @@ import {
     ArrowUpRight, ArrowDownRight, AlertTriangle, Calendar, X,
     List, Kanban as KanbanIcon, Check, Menu, ChevronLeft, TrendingUp, DollarSign,
     Repeat, RefreshCw, Briefcase, Wallet, FileText, AlertCircle, Ban, Gift, Calculator, Lock, PieChart as PieIcon,
-    Building2, FolderOpen, Activity, CalendarDays, MoreHorizontal, Percent, TrendingDown, Scale
+    Building2, FolderOpen, Activity, CalendarDays, MoreHorizontal, Percent, TrendingDown, Scale, ArrowRightLeft
 } from 'lucide-react'
 import {
     format, isWithinInterval, parseISO, isValid, differenceInCalendarDays, startOfDay, setDate, lastDayOfMonth, isSameDay, isBefore
@@ -21,7 +21,7 @@ import {
 const tabNames = {
     'dashboard': 'Visão Geral',
     'vendas': 'Vendas & Comissões',
-    'lancamentos': 'Lançamentos',
+    'lancamentos': 'Gestão de Lançamentos',
     'recorrencias': 'Despesas Fixas',
     'fornecedores': 'Entidades',
     'categorias': 'Plano de Contas'
@@ -130,6 +130,9 @@ export default function GestorFinanceiro() {
     const [syncing, setSyncing] = useState(false)
     const [dateResetKey, setDateResetKey] = useState(0)
 
+    // Novo estado para controlar a sub-aba de lançamentos
+    const [lancamentoMode, setLancamentoMode] = useState('saida') // 'saida' | 'entrada'
+
     const [transactions, setTransactions] = useState([])
     const [suppliers, setSuppliers] = useState([])
     const [categories, setCategories] = useState([])
@@ -160,7 +163,7 @@ export default function GestorFinanceiro() {
                 if (diff === 0) return <span className="text-emerald-600 font-bold">Pago no dia</span>;
                 return <span className="text-blue-600 font-bold">Pago {diff}d adiantado</span>;
             }
-            return <span className="text-emerald-600 font-bold">Pago</span>;
+            return <span className="text-emerald-600 font-bold">Pago</span>; // Fallback se não tiver data recebimento
         }
         const diff = differenceInCalendarDays(dueDate, new Date());
         if (diff < 0) return <span className="text-red-500 font-bold">{Math.abs(diff)}d de atraso</span>;
@@ -224,36 +227,25 @@ export default function GestorFinanceiro() {
         })
     }, [transactions, filters])
 
-    // --- CÁLCULOS FINANCEIROS (ADAPTADO PARA IMOBILIÁRIA) ---
+    // --- CÁLCULOS FINANCEIROS ---
     const financialMetrics = useMemo(() => {
         const data = filteredTransactions.filter(t => t.status !== 'Cancelado');
 
         // VGC: Valor Geral de Comissão (Entrada Bruta)
         const vgc = data.filter(t => t.type === 'receita').reduce((acc, t) => acc + Number(t.amount), 0);
 
-        // Helper para identificar o que é Repasse (Custo Variável)
         const isRepasse = (t) => {
             if (t.type !== 'despesa') return false;
-            // 1. Vinculado a venda
             if (t.sale_id) return true;
-            // 2. Categoria explícita de Imposto ou Comissão
             const catName = t.categories?.name?.toLowerCase() || '';
             return catName.includes('imposto') || catName.includes('comissão');
         };
 
-        // Repasses: Comissões de terceiros + Impostos (Custos Diretos)
         const repasses = data.filter(t => isRepasse(t)).reduce((acc, t) => acc + Number(t.amount), 0);
-
-        // Receita Líquida da Agência (O que sobra na casa)
         const receitaLiquidaAgencia = vgc - repasses;
-
-        // Despesas Operacionais (Fixas: Aluguel, Luz, Sistemas) -> Tudo que é despesa e NÃO é repasse
         const despesasFixas = data.filter(t => t.type === 'despesa' && !isRepasse(t)).reduce((acc, t) => acc + Number(t.amount), 0);
-
-        // Lucro Operacional
         const lucroOperacional = receitaLiquidaAgencia - despesasFixas;
 
-        // Margens %
         const margemRetencao = vgc > 0 ? (receitaLiquidaAgencia / vgc) * 100 : 0;
         const margemLucro = vgc > 0 ? (lucroOperacional / vgc) * 100 : 0;
 
@@ -305,14 +297,34 @@ export default function GestorFinanceiro() {
 
     const kanbanColumns = useMemo(() => {
         const today = startOfDay(new Date())
-        const cols = {
-            vencido: { title: 'Vencidos', items: [], color: 'bg-red-50 border-red-100 text-red-700' },
-            hoje: { title: 'Vencendo Hoje', items: [], color: 'bg-orange-50 border-orange-100 text-orange-700' },
-            aberto: { title: 'A Vencer', items: [], color: 'bg-blue-50 border-blue-100 text-blue-700' },
-            pago: { title: 'Pagos / Recebidos', items: [], color: 'bg-emerald-50 border-emerald-100 text-emerald-700' },
-            cancelado: { title: 'Cancelados', items: [], color: 'bg-gray-50 border-gray-100 text-gray-500' }
+        const targetType = lancamentoMode === 'entrada' ? 'receita' : 'despesa';
+
+        // Definição das colunas baseadas no MODO (Entrada ou Saída)
+        let cols = {};
+
+        if (lancamentoMode === 'saida') {
+            cols = {
+                vencido: { title: 'Vencidos', items: [], color: 'bg-red-50 border-red-100 text-red-700' },
+                hoje: { title: 'Vencendo Hoje', items: [], color: 'bg-orange-50 border-orange-100 text-orange-700' },
+                aberto: { title: 'A Pagar', items: [], color: 'bg-blue-50 border-blue-100 text-blue-700' },
+                pago: { title: 'Pagos', items: [], color: 'bg-emerald-50 border-emerald-100 text-emerald-700' },
+                cancelado: { title: 'Cancelados', items: [], color: 'bg-gray-50 border-gray-100 text-gray-500' }
+            }
+        } else {
+            cols = {
+                vencido: { title: 'Atrasados', items: [], color: 'bg-red-50 border-red-100 text-red-700' },
+                hoje: { title: 'Receber Hoje', items: [], color: 'bg-orange-50 border-orange-100 text-orange-700' },
+                aberto: { title: 'A Receber', items: [], color: 'bg-blue-50 border-blue-100 text-blue-700' },
+                pago: { title: 'Recebidos', items: [], color: 'bg-emerald-50 border-emerald-100 text-emerald-700' },
+                cancelado: { title: 'Cancelados', items: [], color: 'bg-gray-50 border-gray-100 text-gray-500' }
+            }
         }
-        const sorted = [...filteredTransactions].sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+
+        // Filtra transações pelo TIPO da aba atual
+        const sorted = [...filteredTransactions]
+            .filter(t => t.type === targetType)
+            .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+
         sorted.forEach(t => {
             if (t.status === 'Cancelado') { cols.cancelado.items.push(t); return; }
             if (t.status === 'Pago') { cols.pago.items.push(t); return }
@@ -322,7 +334,7 @@ export default function GestorFinanceiro() {
             else cols.aberto.items.push(t);
         })
         return cols
-    }, [filteredTransactions, activeTab])
+    }, [filteredTransactions, activeTab, lancamentoMode]) // Reage à mudança de aba de lançamentos
 
     async function handleSave() {
         setLoading(true)
@@ -335,7 +347,13 @@ export default function GestorFinanceiro() {
                     if (formData.due_date < today) finalStatus = 'Vencido'
                     else finalStatus = 'Aberto'
                 }
-                const payload = { description: formData.description, amount: parseFloat(formData.amount), due_date: formData.due_date, supplier_id: formData.supplier_id || null, category_id: formData.category_id || null, status: finalStatus, type: formData.type_trans || 'despesa', nf_number: formData.nf_number || null, nf_issue_date: formData.nf_issue_date || null, nf_received_date: formData.nf_received_date || null }
+
+                // Força o tipo se estiver vindo da aba de lançamentos restrita
+                const forcedType = (activeTab === 'lancamentos')
+                    ? (lancamentoMode === 'entrada' ? 'receita' : 'despesa')
+                    : formData.type_trans;
+
+                const payload = { description: formData.description, amount: parseFloat(formData.amount), due_date: formData.due_date, supplier_id: formData.supplier_id || null, category_id: formData.category_id || null, status: finalStatus, type: forcedType, nf_number: formData.nf_number || null, nf_issue_date: formData.nf_issue_date || null, nf_received_date: formData.nf_received_date || null }
                 const { error } = editingItem ? await supabase.from('transactions').update(payload).eq('id', editingItem.id) : await supabase.from('transactions').insert([payload])
                 if (error) throw error
             }
@@ -404,7 +422,13 @@ export default function GestorFinanceiro() {
     function openModal(type, item = null) {
         setModalType(type); setEditingItem(item);
         const today = new Date().toISOString().split('T')[0]
-        setFormData({ description: '', amount: '', due_date: today, day_of_month: '', supplier_id: '', category_id: '', status: 'Aberto', name: '', type: '', type_trans: item?.type || 'despesa', nf_number: '', nf_issue_date: '', nf_received_date: '' })
+
+        // Define o tipo padrão com base na aba ativa (Se estiver em lançamentos, respeita o filtro)
+        let defaultType = 'despesa';
+        if (activeTab === 'lancamentos' && lancamentoMode === 'entrada') defaultType = 'receita';
+        if (item) defaultType = item.type; // Se for edição, respeita o item
+
+        setFormData({ description: '', amount: '', due_date: today, day_of_month: '', supplier_id: '', category_id: '', status: 'Aberto', name: '', type: '', type_trans: defaultType, nf_number: '', nf_issue_date: '', nf_received_date: '' })
         if (type === 'transaction' && item) setFormData({ ...item, type_trans: item.type })
 
         if (type === 'sale') {
@@ -473,7 +497,7 @@ export default function GestorFinanceiro() {
 
                             {/* KPI CARDS COMPACTOS */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                                <KpiCard title="VGC Total" icon={ArrowUpRight} colorTheme="green" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.vgc)} />
+                                <KpiCard title="Receita Bruta (VGC)" icon={ArrowUpRight} colorTheme="green" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.vgc)} />
                                 <KpiCard title="Repasses" subtitle="Corretor/Imposto" icon={Tag} colorTheme="orange" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.repasses)} />
                                 <KpiCard title="Receita Líquida" subtitle="Agência" icon={Scale} colorTheme="blue" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.receitaLiquidaAgencia)} />
                                 <KpiCard title="Despesas Fixas" icon={ArrowDownRight} colorTheme="red" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasFixas)} />
@@ -482,7 +506,7 @@ export default function GestorFinanceiro() {
 
                             {/* MARGENS LINHA FINA */}
                             <div className="bg-white p-3 rounded-xl shadow-sm border border-neutral-200 flex flex-wrap gap-4 justify-around items-center">
-                                <MarginCard title="Retenção Agência" value={financialMetrics.margemRetencao} color="blue" />
+                                <MarginCard title="Margem da Agência (Retenção)" value={financialMetrics.margemRetencao} color="blue" />
                                 <MarginCard title="Margem de Lucro" value={financialMetrics.margemLucro} color="emerald" />
                             </div>
 
@@ -547,63 +571,37 @@ export default function GestorFinanceiro() {
                         </div>
                     )}
 
-                    {activeTab === 'vendas' && (
-                        <div className="w-full max-w-[98%] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {sales.map(sale => {
-                                const stats = calculateSaleTotals(sale, transactions);
-                                const percent = stats.totalHonorarios > 0 ? (stats.recebidoTotal / stats.totalHonorarios) * 100 : 0;
-                                const hasPendingCommission = transactions.some(t => t.sale_id === sale.id && t.description.includes('Comissão') && t.status === 'Aberto');
-                                const showAlert = stats.recebidoTotal > 0 && hasPendingCommission;
-
-                                return (
-                                    <div key={sale.id} className={`bg-white rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between ${showAlert ? 'border-l-4 border-l-yellow-400' : 'border-neutral-200'}`}>
-                                        <div>
-                                            <div className="flex justify-between items-start mb-6">
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => openModal('sale', sale)} className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition" title="Editar Venda"><Edit size={16} /></button>
-                                                    <button onClick={() => handleDelete(sale.id, 'sales')} className="text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition" title="Excluir Venda"><Trash2 size={16} /></button>
-                                                </div>
-                                                <div className="text-right"><span className="bg-neutral-100 text-neutral-600 px-2 py-1 rounded text-[10px] font-bold uppercase block mb-1">Ativo</span></div>
-                                            </div>
-
-                                            {showAlert && <div className="mb-4 flex items-center gap-2 text-xs font-bold text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded-lg w-fit"><AlertCircle size={14} /> Comissão Pendente</div>}
-                                            <div className="mb-6">
-                                                <h3 className="font-bold text-xl text-neutral-900 leading-tight">{sale.property_info}</h3>
-                                                <p className="text-sm text-neutral-500 mt-1">{sale.client_name}</p>
-                                                <p className="text-[10px] font-bold text-neutral-400 mt-2">Corretor: {sale.suppliers?.name?.split(' ')[0] || 'N/A'}</p>
-                                            </div>
-
-                                            <div className="space-y-4 mb-6">
-                                                <div className="p-3 bg-neutral-50 rounded-xl">
-                                                    <div className="flex justify-between text-xs mb-2"><span className="text-neutral-500 font-bold uppercase">Recebido</span><span className="font-bold text-emerald-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.recebidoTotal)} <span className="text-neutral-400 font-normal">/ {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(stats.totalHonorarios)}</span></span></div>
-                                                    <div className="w-full bg-neutral-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full transition-all duration-500" style={{ width: `${Math.min(percent, 100)}%` }}></div></div>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-dashed border-neutral-100">
-                                                    <div><p className="text-neutral-400">Comissão Paga</p><p className="font-bold text-neutral-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.comissaoPaga)}</p></div>
-                                                    <div className="text-right"><p className="text-neutral-400">Impostos Pagos</p><p className="font-bold text-neutral-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.impostosPagos)}</p></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button onClick={() => openModal('installment', sale)} className="flex-1 bg-neutral-900 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-black transition shadow-lg shadow-neutral-200">Lançar Recebimento</button>
-                                            <button onClick={() => openModal('bonus', sale)} className="px-4 bg-yellow-100 text-yellow-700 rounded-xl hover:bg-yellow-200 transition" title="Adicionar Bônus"><Gift size={18} /></button>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )}
-
                     {activeTab === 'lancamentos' && (
                         <div className="w-full max-w-[98%] mx-auto h-full flex flex-col">
+                            {/* SELETOR DE MODO (ENTRADAS vs SAIDAS) */}
+                            <div className="bg-white border-b border-neutral-200 px-6 py-3 flex items-center gap-4 flex-shrink-0">
+                                <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Modo de Visualização:</span>
+                                <div className="flex bg-neutral-100 p-1 rounded-lg">
+                                    <button
+                                        onClick={() => setLancamentoMode('saida')}
+                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 ${lancamentoMode === 'saida' ? 'bg-white text-red-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-700'}`}
+                                    >
+                                        <ArrowDownRight size={14} /> Contas a Pagar (Saídas)
+                                    </button>
+                                    <button
+                                        onClick={() => setLancamentoMode('entrada')}
+                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 ${lancamentoMode === 'entrada' ? 'bg-white text-green-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-700'}`}
+                                    >
+                                        <ArrowUpRight size={14} /> Contas a Receber (Entradas)
+                                    </button>
+                                </div>
+                            </div>
+
                             <FilterBar filters={filters} setFilters={setFilters} categories={categories} suppliers={suppliers} dateResetKey={dateResetKey} setDateResetKey={setDateResetKey} />
+
                             <div className="flex-1 min-h-0">
                                 {viewMode === 'list' ? (
                                     <div className="bg-white rounded-3xl shadow-sm border border-neutral-200 overflow-hidden h-full overflow-y-auto custom-scrollbar">
                                         <table className="w-full text-sm text-left">
                                             <thead className="bg-neutral-50 text-neutral-500 font-semibold border-b sticky top-0 z-10"><tr><th className="px-6 py-4">Status</th><th className="px-6 py-4">Vencimento</th><th className="px-6 py-4">Descrição</th><th className="px-6 py-4">Entidade</th><th className="px-6 py-4">Plano Contas</th><th className="px-6 py-4 text-right">Valor</th><th className="px-6 py-4 text-center">Ações</th></tr></thead>
                                             <tbody className="divide-y divide-neutral-100">
-                                                {filteredTransactions.map(t => (
+                                                {/* Filtra a lista também pelo modo selecionado */}
+                                                {filteredTransactions.filter(t => t.type === (lancamentoMode === 'entrada' ? 'receita' : 'despesa')).map(t => (
                                                     <tr key={t.id} className="hover:bg-blue-50/30 transition-colors group">
                                                         <td className="px-6 py-4">
                                                             <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center gap-1 w-fit ${t.status === 'Pago' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : t.status === 'Vencido' ? 'bg-rose-50 text-rose-600 border-rose-100' : t.status === 'Cancelado' ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
@@ -760,21 +758,30 @@ export default function GestorFinanceiro() {
                 <div className="fixed inset-0 bg-neutral-900/60 z-50 flex items-center justify-center backdrop-blur-sm p-4"><div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200"><div className="px-6 py-4 border-b border-neutral-100 flex justify-between items-center bg-neutral-50"><h3 className="font-bold text-lg text-neutral-800">{modalType === 'recurring' ? 'Conta Recorrente' : modalType === 'bonus' ? 'Lançar Bônus' : modalType === 'installment' ? 'Lançar Recebimento' : 'Novo Registro'}</h3><button onClick={() => setIsModalOpen(false)}><X size={20} className="text-neutral-400 hover:text-neutral-800 transition-colors" /></button></div><div className="p-6 space-y-4">
                     {modalType === 'transaction' && (
                         <>
-                            {/* SELETOR DE TIPO (ENTRADA/SAÍDA) */}
-                            <div className="flex gap-2 mb-2 p-1 bg-neutral-100 rounded-lg">
-                                <button
-                                    onClick={() => setFormData({ ...formData, type_trans: 'despesa' })}
-                                    className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${formData.type_trans === 'despesa' ? 'bg-white text-red-600 shadow-sm border border-neutral-200' : 'text-neutral-400 hover:text-neutral-600'}`}
-                                >
-                                    Saída / Despesa
-                                </button>
-                                <button
-                                    onClick={() => setFormData({ ...formData, type_trans: 'receita' })}
-                                    className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${formData.type_trans === 'receita' ? 'bg-white text-green-600 shadow-sm border border-neutral-200' : 'text-neutral-400 hover:text-neutral-600'}`}
-                                >
-                                    Entrada / Receita
-                                </button>
-                            </div>
+                            {/* SELETOR DE TIPO (MOSTRA APENAS SE NÃO ESTIVER NA ABA LANÇAMENTOS, POIS LÁ É TRAVADO) */}
+                            {activeTab !== 'lancamentos' && (
+                                <div className="flex gap-2 mb-2 p-1 bg-neutral-100 rounded-lg">
+                                    <button
+                                        onClick={() => setFormData({ ...formData, type_trans: 'despesa' })}
+                                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${formData.type_trans === 'despesa' ? 'bg-white text-red-600 shadow-sm border border-neutral-200' : 'text-neutral-400 hover:text-neutral-600'}`}
+                                    >
+                                        Saída / Despesa
+                                    </button>
+                                    <button
+                                        onClick={() => setFormData({ ...formData, type_trans: 'receita' })}
+                                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${formData.type_trans === 'receita' ? 'bg-white text-green-600 shadow-sm border border-neutral-200' : 'text-neutral-400 hover:text-neutral-600'}`}
+                                    >
+                                        Entrada / Receita
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* AVISO QUANDO O TIPO ESTÁ TRAVADO PELO PIPELINE */}
+                            {activeTab === 'lancamentos' && (
+                                <div className={`text-xs font-bold uppercase p-2 rounded-lg text-center mb-3 ${lancamentoMode === 'entrada' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                    Registrando {lancamentoMode === 'entrada' ? 'Entrada (Receita)' : 'Saída (Despesa)'}
+                                </div>
+                            )}
 
                             <div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Descrição</label><input className="w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] focus:border-transparent transition-all" defaultValue={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} /></div>
                             <div className="grid grid-cols-2 gap-4"><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Valor</label><input type="number" step="0.01" className="w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all" defaultValue={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} /></div><div><label className="text-[10px] font-bold text-neutral-500 uppercase block mb-1">Vencimento</label><input type="date" className="w-full border border-neutral-200 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#f9b410] transition-all" defaultValue={formData.due_date} onChange={e => setFormData({ ...formData, due_date: e.target.value })} /></div></div>

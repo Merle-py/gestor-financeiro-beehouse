@@ -74,6 +74,7 @@
     --color-yellow-200: #fff085;
     --color-yellow-400: #fac800;
     --color-yellow-700: #a36100;
+    --color-green-50: #f0fdf4;
     --color-green-600: #00a544;
     --color-green-700: #008138;
     --color-emerald-50: #ecfdf5;
@@ -169,6 +170,7 @@
       --color-yellow-200: lab(94.3433% -5.00426 52.9663);
       --color-yellow-400: lab(83.2664% 8.65132 106.895);
       --color-yellow-700: lab(47.8202% 25.2426 66.5015);
+      --color-green-50: lab(98.1563% -5.60117 2.75913);
       --color-green-600: lab(59.0978% -58.6621 41.2579);
       --color-green-700: lab(47.0329% -47.0239 31.4788);
       --color-emerald-50: lab(97.8462% -6.94963 1.85487);
@@ -1045,6 +1047,10 @@
     background-color: var(--color-gray-100);
   }
 
+  .bg-green-50 {
+    background-color: var(--color-green-50);
+  }
+
   .bg-indigo-50 {
     background-color: var(--color-indigo-50);
   }
@@ -1766,6 +1772,12 @@
   @media (hover: hover) {
     .hover\:text-neutral-600:hover {
       color: var(--color-neutral-600);
+    }
+  }
+
+  @media (hover: hover) {
+    .hover\:text-neutral-700:hover {
+      color: var(--color-neutral-700);
     }
   }
 
