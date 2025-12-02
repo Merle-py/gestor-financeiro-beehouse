@@ -221,14 +221,24 @@ export default function GestorFinanceiro() {
         // VGC: Valor Geral de Comissão (Entrada Bruta)
         const vgc = data.filter(t => t.type === 'receita').reduce((acc, t) => acc + Number(t.amount), 0);
 
-        // Repasses: Comissões de terceiros + Impostos de Notas (Custos Diretos)
-        const repasses = data.filter(t => t.type === 'despesa' && t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
+        // Helper para identificar o que é Repasse (Custo Variável)
+        const isRepasse = (t) => {
+            if (t.type !== 'despesa') return false;
+            // 1. Vinculado a venda
+            if (t.sale_id) return true;
+            // 2. Categoria explícita de Imposto ou Comissão
+            const catName = t.categories?.name?.toLowerCase() || '';
+            return catName.includes('imposto') || catName.includes('comissão');
+        };
+
+        // Repasses: Comissões de terceiros + Impostos (Custos Diretos)
+        const repasses = data.filter(t => isRepasse(t)).reduce((acc, t) => acc + Number(t.amount), 0);
 
         // Receita Líquida da Agência (O que sobra na casa)
         const receitaLiquidaAgencia = vgc - repasses;
 
-        // Despesas Operacionais (Fixas: Aluguel, Luz, Sistemas)
-        const despesasFixas = data.filter(t => t.type === 'despesa' && !t.sale_id).reduce((acc, t) => acc + Number(t.amount), 0);
+        // Despesas Operacionais (Fixas: Aluguel, Luz, Sistemas) -> Tudo que é despesa e NÃO é repasse
+        const despesasFixas = data.filter(t => t.type === 'despesa' && !isRepasse(t)).reduce((acc, t) => acc + Number(t.amount), 0);
 
         // Lucro Operacional
         const lucroOperacional = receitaLiquidaAgencia - despesasFixas;
@@ -321,7 +331,6 @@ export default function GestorFinanceiro() {
             }
             else if (modalType === 'sale') {
                 const payload = { client_name: saleForm.client_name, property_info: saleForm.property_info, total_value: parseFloat(saleForm.total_value), agency_fee_percent: parseFloat(saleForm.agency_fee_percent), broker_commission_percent: parseFloat(saleForm.broker_commission_percent), broker_id: saleForm.broker_id || null }
-                // LÓGICA DE ATUALIZAÇÃO OU INSERÇÃO PARA VENDAS
                 const { error } = editingItem
                     ? await supabase.from('sales').update(payload).eq('id', editingItem.id)
                     : await supabase.from('sales').insert([payload]);
@@ -388,7 +397,6 @@ export default function GestorFinanceiro() {
         setFormData({ description: '', amount: '', due_date: today, day_of_month: '', supplier_id: '', category_id: '', status: 'Aberto', name: '', type: '', type_trans: item?.type || 'despesa', nf_number: '', nf_issue_date: '', nf_received_date: '' })
         if (type === 'transaction' && item) setFormData({ ...item, type_trans: item.type })
 
-        // PREENCHIMENTO DO FORMULÁRIO DE VENDA PARA EDIÇÃO
         if (type === 'sale') {
             if (item) {
                 setSaleForm({
