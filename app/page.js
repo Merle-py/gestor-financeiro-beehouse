@@ -258,7 +258,6 @@ export default function GestorFinanceiro() {
         filteredTransactions.forEach(t => {
             if (t.status === 'Cancelado') return;
 
-            // Pie Charts Calculation
             const cat = t.categories?.name || 'Outros';
             if (t.type === 'receita') {
                 incomeCatTotals[cat] = (incomeCatTotals[cat] || 0) + Number(t.amount);
@@ -266,7 +265,6 @@ export default function GestorFinanceiro() {
                 expenseCatTotals[cat] = (expenseCatTotals[cat] || 0) + Number(t.amount);
             }
 
-            // Flux Chart Calculation
             const date = parseISO(t.due_date);
             if (isValid(date)) {
                 const k = format(date, 'MMM/yy', { locale: ptBR });
@@ -553,9 +551,19 @@ export default function GestorFinanceiro() {
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 10 }} dy={5} />
                                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#a0a0a0', fontSize: 10 }} tickFormatter={(v) => new Intl.NumberFormat('pt-BR', { notation: "compact" }).format(v)} />
-                                            <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', fontSize: '12px' }} formatter={(value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)} />
+                                            <Tooltip
+                                                cursor={{ fill: 'transparent' }}
+                                                contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
+                                                formatter={(value, name, props) => [
+                                                    <span key="val" className={props.payload.saldo >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+                                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(props.payload.saldo)}
+                                                    </span>,
+                                                    'Resultado'
+                                                ]}
+                                            />
                                             <ReferenceLine y={0} stroke="#e5e5e5" />
-                                            <Bar dataKey="saldo" radius={[3, 3, 0, 0]} barSize={30}>
+                                            {/* dataKey como função para forçar valor absoluto (barra para cima) */}
+                                            <Bar dataKey={(entry) => Math.abs(entry.saldo)} radius={[3, 3, 0, 0]} barSize={30}>
                                                 {chartData.flow.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={entry.saldo >= 0 ? '#10b981' : '#ef4444'} />
                                                 ))}
@@ -564,89 +572,44 @@ export default function GestorFinanceiro() {
                                     </ResponsiveContainer>
                                 </div>
 
-                                {/* GRÁFICO 3: CATEGORIAS (2 PIES: RECEITA E DESPESA) */}
+                                {/* GRÁFICO 3: DISTRIBUIÇÃO POR CATEGORIA */}
                                 <div className="bg-white p-5 rounded-xl shadow-sm border border-neutral-200 h-[280px] flex flex-col">
-                                    <div className="flex gap-2 mb-2 justify-center">
-                                        <div className="flex items-center gap-1 text-[10px] font-bold uppercase text-emerald-600"><span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Receitas</div>
-                                        <div className="flex items-center gap-1 text-[10px] font-bold uppercase text-rose-600"><span className="w-2 h-2 bg-rose-500 rounded-full"></span> Despesas</div>
-                                    </div>
-                                    <div className="flex-1 flex gap-2">
-                                        <ResponsiveContainer width="50%" height="100%">
-                                            <PieChart>
-                                                <Pie data={chartData.pieIncome} cx="50%" cy="50%" innerRadius={35} outerRadius={50} paddingAngle={2} dataKey="value">
-                                                    {chartData.pieIncome.map((e, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />)}
-                                                </Pie>
-                                                <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(value)} contentStyle={{ borderRadius: '8px', fontSize: '10px' }} />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        <ResponsiveContainer width="50%" height="100%">
-                                            <PieChart>
-                                                <Pie data={chartData.pieExpense} cx="50%" cy="50%" innerRadius={35} outerRadius={50} paddingAngle={2} dataKey="value">
-                                                    {chartData.pieExpense.map((e, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />)}
-                                                </Pie>
-                                                <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(value)} contentStyle={{ borderRadius: '8px', fontSize: '10px' }} />
-                                            </PieChart>
-                                        </ResponsiveContainer>
+                                    <h3 className="font-bold text-sm text-neutral-700 mb-2 flex items-center gap-2"><FolderOpen size={16} className="text-indigo-500" /> Por Categoria</h3>
+                                    <div className="flex-1 flex gap-4">
+                                        {/* Receitas */}
+                                        <div className="flex-1 flex flex-col items-center relative">
+                                            <span className="text-[10px] font-bold uppercase text-emerald-600 mb-1">Receitas</span>
+                                            <div className="w-full h-full">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <PieChart>
+                                                        <Pie data={chartData.pieIncome} cx="50%" cy="55%" innerRadius={30} outerRadius={50} paddingAngle={2} dataKey="value">
+                                                            {chartData.pieIncome.map((e, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />)}
+                                                        </Pie>
+                                                        <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(value)} contentStyle={{ borderRadius: '8px', fontSize: '10px' }} />
+                                                        <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px' }} />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </div>
+
+                                        {/* Despesas */}
+                                        <div className="flex-1 flex flex-col items-center relative">
+                                            <span className="text-[10px] font-bold uppercase text-rose-600 mb-1">Despesas</span>
+                                            <div className="w-full h-full">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <PieChart>
+                                                        <Pie data={chartData.pieExpense} cx="50%" cy="55%" innerRadius={30} outerRadius={50} paddingAngle={2} dataKey="value">
+                                                            {chartData.pieExpense.map((e, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />)}
+                                                        </Pie>
+                                                        <Tooltip formatter={(value) => new Intl.NumberFormat('pt-BR', { notation: "compact", style: 'currency', currency: 'BRL' }).format(value)} contentStyle={{ borderRadius: '8px', fontSize: '10px' }} />
+                                                        <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '9px' }} />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'vendas' && (
-                        <div className="w-full max-w-[98%] mx-auto pb-8">
-                            {sales.length === 0 ? (
-                                <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-neutral-300">
-                                    <FileWarning className="mx-auto h-12 w-12 text-neutral-300 mb-4" />
-                                    <h3 className="text-lg font-medium text-neutral-900">Nenhuma venda registrada</h3>
-                                    <p className="text-neutral-500 text-sm mt-1">Clique em "Nova Venda" para começar a gerenciar suas comissões.</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {sales.map(sale => {
-                                        const stats = calculateSaleTotals(sale, transactions);
-                                        const percent = stats.totalHonorarios > 0 ? (stats.recebidoTotal / stats.totalHonorarios) * 100 : 0;
-                                        const hasPendingCommission = transactions.some(t => t.sale_id === sale.id && t.description.includes('Comissão') && t.status === 'Aberto');
-                                        const showAlert = stats.recebidoTotal > 0 && hasPendingCommission;
-
-                                        return (
-                                            <div key={sale.id} className={`bg-white rounded-2xl border p-6 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between ${showAlert ? 'border-l-4 border-l-yellow-400' : 'border-neutral-200'}`}>
-                                                <div>
-                                                    <div className="flex justify-between items-start mb-6">
-                                                        <div className="flex gap-2">
-                                                            <button onClick={() => openModal('sale', sale)} className="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition" title="Editar Venda"><Edit size={16} /></button>
-                                                            <button onClick={() => handleDelete(sale.id, 'sales')} className="text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition" title="Excluir Venda"><Trash2 size={16} /></button>
-                                                        </div>
-                                                        <div className="text-right"><span className="bg-neutral-100 text-neutral-600 px-2 py-1 rounded text-[10px] font-bold uppercase block mb-1">Ativo</span></div>
-                                                    </div>
-
-                                                    {showAlert && <div className="mb-4 flex items-center gap-2 text-xs font-bold text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded-lg w-fit"><AlertCircle size={14} /> Comissão Pendente</div>}
-                                                    <div className="mb-6">
-                                                        <h3 className="font-bold text-xl text-neutral-900 leading-tight">{sale.property_info}</h3>
-                                                        <p className="text-sm text-neutral-500 mt-1">{sale.client_name}</p>
-                                                        <p className="text-[10px] font-bold text-neutral-400 mt-2">Corretor: {sale.suppliers?.name?.split(' ')[0] || 'N/A'}</p>
-                                                    </div>
-
-                                                    <div className="space-y-4 mb-6">
-                                                        <div className="p-3 bg-neutral-50 rounded-xl">
-                                                            <div className="flex justify-between text-xs mb-2"><span className="text-neutral-500 font-bold uppercase">Recebido</span><span className="font-bold text-emerald-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.recebidoTotal)} <span className="text-neutral-400 font-normal">/ {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(stats.totalHonorarios)}</span></span></div>
-                                                            <div className="w-full bg-neutral-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full transition-all duration-500" style={{ width: `${Math.min(percent, 100)}%` }}></div></div>
-                                                        </div>
-                                                        <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-dashed border-neutral-100">
-                                                            <div><p className="text-neutral-400">Comissão Paga</p><p className="font-bold text-neutral-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.comissaoPaga)}</p></div>
-                                                            <div className="text-right"><p className="text-neutral-400">Impostos Pagos</p><p className="font-bold text-neutral-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.impostosPagos)}</p></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => openModal('installment', sale)} className="flex-1 bg-neutral-900 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-black transition shadow-lg shadow-neutral-200">Lançar Recebimento</button>
-                                                    <button onClick={() => openModal('bonus', sale)} className="px-4 bg-yellow-100 text-yellow-700 rounded-xl hover:bg-yellow-200 transition" title="Adicionar Bônus"><Gift size={18} /></button>
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            )}
                         </div>
                     )}
 
