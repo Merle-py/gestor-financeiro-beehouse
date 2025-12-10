@@ -10,18 +10,34 @@ export async function GET(request) {
     }
 
     try {
-        await gerarRecorrencias();
+        const syncResult = await gerarRecorrencias();
         const notificationResult = await verificarVencimentos();
-        return Response.json({ success: true, notification: notificationResult });
+        return Response.json({
+            success: true,
+            notification: notificationResult,
+            sync: syncResult
+        });
     } catch (error) {
+        console.error('Erro no cron:', error);
         return Response.json({ error: error.message }, { status: 500 });
     }
 }
 
 async function gerarRecorrencias() {
+    console.log('=== INICIANDO GERAÇÃO DE RECORRÊNCIAS ===');
+
     // 1. Busca regras ativas
-    const { data: recurring } = await supabase.from('recurring_expenses').select('*').eq('active', true);
-    if (!recurring || recurring.length === 0) return;
+    const { data: recurring, error: recurringError } = await supabase.from('recurring_expenses').select('*').eq('active', true);
+
+    console.log('Regras de recorrência encontradas:', recurring?.length || 0);
+    console.log('Erro ao buscar recorrências:', recurringError);
+
+    if (!recurring || recurring.length === 0) {
+        console.log('Nenhuma regra de recorrência ativa encontrada');
+        return { recorrenciasEncontradas: 0, message: 'Nenhuma regra de recorrência ativa' };
+    }
+
+    console.log('Regras:', recurring.map(r => ({ id: r.id, desc: r.description, day: r.day_of_month, amount: r.amount, active: r.active })));
 
     const hoje = new Date();
     const mesesParaGerar = [hoje, addMonths(hoje, 1)];
@@ -29,11 +45,13 @@ async function gerarRecorrencias() {
 
     // 2. Busca transações existentes para comparação
     const { data: transacoesExistentes } = await supabase.from('transactions').select('*');
+    console.log('Transações existentes no banco:', transacoesExistentes?.length || 0);
 
     for (const mesRef of mesesParaGerar) {
         // Define o início e fim do mês de referência para busca
         const inicioMes = format(startOfMonth(mesRef), 'yyyy-MM-dd');
         const fimMes = format(lastDayOfMonth(mesRef), 'yyyy-MM-dd');
+        console.log(`\nProcessando mês: ${format(mesRef, 'MMM/yyyy')} (${inicioMes} a ${fimMes})`);
 
         for (const item of recurring) {
             // Calcula a data de vencimento ideal para este mês
@@ -45,18 +63,20 @@ async function gerarRecorrencias() {
             }
             const dataString = format(dataVencimento, 'yyyy-MM-dd');
 
+            console.log(`  - Verificando "${item.description}" para ${dataString}`);
+
             // 3. Procura se já existe uma transação deste ID de recorrência DENTRO deste mês
-            // Isso corrige o problema: buscamos pelo ID da regra e pelo intervalo do mês, não apenas pela data exata
-            const transacaoExistente = transacoesExistentes.find(t => {
+            const transacaoExistente = transacoesExistentes?.find(t => {
                 const ehDaRegra = t.recurring_rule_id === item.id;
                 const estaNoMes = t.due_date >= inicioMes && t.due_date <= fimMes;
                 return ehDaRegra && estaNoMes;
             });
 
             if (transacaoExistente) {
+                console.log(`    -> Já existe transação (ID: ${transacaoExistente.id}, status: ${transacaoExistente.status})`);
+
                 // 4. ATUALIZAÇÃO: Se existe e não está paga, atualiza os dados
                 if (transacaoExistente.status !== 'Pago' && transacaoExistente.status !== 'Cancelado') {
-                    // Verifica se algo mudou para evitar update desnecessário
                     const mudouAlgo =
                         parseFloat(transacaoExistente.amount) !== parseFloat(item.amount) ||
                         transacaoExistente.description !== item.description ||
@@ -65,10 +85,11 @@ async function gerarRecorrencias() {
                         transacaoExistente.supplier_id !== item.supplier_id;
 
                     if (mudouAlgo) {
+                        console.log(`    -> Atualizando transação existente`);
                         await supabase.from('transactions').update({
                             description: item.description,
                             amount: item.amount,
-                            due_date: dataString, // Atualiza a data caso o dia da recorrência tenha mudado
+                            due_date: dataString,
                             supplier_id: item.supplier_id,
                             category_id: item.category_id
                         }).eq('id', transacaoExistente.id);
@@ -76,15 +97,17 @@ async function gerarRecorrencias() {
                 }
             } else {
                 // 5. INSERÇÃO: Se não existe, adiciona na lista para criar
-                // Verificação secundária para evitar duplicidade por supplier/valor se não tiver ID de regra (legado)
-                const existePorSimilaridade = transacoesExistentes.some(t =>
-                    !t.recurring_rule_id && // Só checa similaridade se não tiver vínculo forte
+                console.log(`    -> Não existe, verificando similaridade...`);
+
+                const existePorSimilaridade = transacoesExistentes?.some(t =>
+                    !t.recurring_rule_id &&
                     t.supplier_id === item.supplier_id &&
                     parseFloat(t.amount) === parseFloat(item.amount) &&
                     t.due_date === dataString
                 );
 
                 if (!existePorSimilaridade) {
+                    console.log(`    -> CRIANDO nova transação para "${item.description}"`);
                     novosLancamentos.push({
                         description: item.description,
                         amount: item.amount,
@@ -95,37 +118,95 @@ async function gerarRecorrencias() {
                         recurring_rule_id: item.id,
                         type: 'despesa'
                     });
+                } else {
+                    console.log(`    -> Já existe por similaridade, ignorando`);
                 }
             }
         }
     }
 
+    console.log(`\nTotal de lançamentos a criar: ${novosLancamentos.length}`);
+
+    let insertResult = null;
     if (novosLancamentos.length > 0) {
-        await supabase.from('transactions').insert(novosLancamentos);
+        console.log('Inserindo lançamentos:', novosLancamentos);
+        const { error: insertError } = await supabase.from('transactions').insert(novosLancamentos);
+        if (insertError) {
+            console.error('Erro ao inserir:', insertError);
+            insertResult = { error: insertError.message };
+        } else {
+            console.log('Lançamentos inseridos com sucesso!');
+            insertResult = { success: true, count: novosLancamentos.length };
+        }
     }
+
+    console.log('=== FIM DA GERAÇÃO DE RECORRÊNCIAS ===');
+
+    return {
+        recorrenciasEncontradas: recurring?.length || 0,
+        transacoesExistentes: transacoesExistentes?.length || 0,
+        lancamentosCriados: novosLancamentos.length,
+        insertResult
+    };
 }
 
 async function verificarVencimentos() {
+    console.log('=== VERIFICANDO VENCIMENTOS ===');
     const hoje = new Date().toISOString().split('T')[0];
     const futuro = new Date();
     futuro.setDate(futuro.getDate() + 2);
     const dataFuturo = futuro.toISOString().split('T')[0];
 
-    const { data: contasHoje } = await supabase.from('transactions').select('*, suppliers(name)').eq('due_date', hoje).neq('status', 'Pago').eq('type', 'despesa');
-    const { data: contasFuturo } = await supabase.from('transactions').select('*, suppliers(name)').eq('due_date', dataFuturo).neq('status', 'Pago').eq('type', 'despesa');
+    console.log(`Buscando contas que vencem hoje: ${hoje}`);
+    console.log(`Buscando contas que vencem em 2 dias: ${dataFuturo}`);
+
+    // Busca contas que vencem hoje e NÃO estão pagas ou canceladas
+    const { data: contasHoje, error: erroHoje } = await supabase
+        .from('transactions')
+        .select('*, suppliers(name)')
+        .eq('due_date', hoje)
+        .eq('type', 'despesa')
+        .not('status', 'in', '("Pago","Cancelado")');
+
+    // Busca contas que vencem em 2 dias e NÃO estão pagas ou canceladas
+    const { data: contasFuturo, error: erroFuturo } = await supabase
+        .from('transactions')
+        .select('*, suppliers(name)')
+        .eq('due_date', dataFuturo)
+        .eq('type', 'despesa')
+        .not('status', 'in', '("Pago","Cancelado")');
+
+    if (erroHoje) console.error('Erro ao buscar contas de hoje:', erroHoje);
+    if (erroFuturo) console.error('Erro ao buscar contas futuras:', erroFuturo);
+
+    console.log(`Contas vencendo hoje (não pagas): ${contasHoje?.length || 0}`);
+    if (contasHoje?.length > 0) {
+        console.log('Detalhes das contas de hoje:', contasHoje.map(c => ({ desc: c.description, status: c.status, amount: c.amount })));
+    }
+
+    console.log(`Contas vencendo em 2 dias (não pagas): ${contasFuturo?.length || 0}`);
+    if (contasFuturo?.length > 0) {
+        console.log('Detalhes das contas futuras:', contasFuturo.map(c => ({ desc: c.description, status: c.status, amount: c.amount })));
+    }
 
     if ((contasHoje && contasHoje.length > 0) || (contasFuturo && contasFuturo.length > 0)) {
         await enviarParaBitrix(contasHoje || [], contasFuturo || []);
         return 'Notificação enviada';
     }
+    console.log('Nenhuma conta para notificar');
     return 'Nada para notificar';
 }
 
 async function enviarParaBitrix(hoje, futuro) {
+    console.log('=== ENVIANDO NOTIFICAÇÃO PARA BITRIX24 ===');
+
     const totalHoje = hoje.reduce((sum, i) => sum + i.amount, 0);
     const totalFuturo = futuro.reduce((sum, i) => sum + i.amount, 0);
     const quebra = "\n";
+    const baseUrl = process.env.BITRIX_WEBHOOK_URL;
+    const userId = process.env.ID_COLABORADOR_FINANCEIRO;
 
+    // Mensagem detalhada para o chat
     let msg = "💰 [B]FINANCEIRO BEEHOUSE[/B]" + quebra + "---------------------------------" + quebra;
 
     if (hoje.length > 0) {
@@ -141,10 +222,49 @@ async function enviarParaBitrix(hoje, futuro) {
 
     msg += "---------------------------------" + quebra + `[URL=https://viver.bitrix24.com.br/marketplace/app/199/]➡️ ABRIR GESTOR[/URL]`;
 
-    const webhookUrl = process.env.BITRIX_WEBHOOK_URL + "im.message.add";
-    await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ "DIALOG_ID": process.env.ID_COLABORADOR_FINANCEIRO, "MESSAGE": msg, "SYSTEM": "Y" })
-    });
+    console.log('Webhook URL:', baseUrl ? 'Configurada' : '❌ NÃO CONFIGURADA');
+    console.log('ID Colaborador:', userId || '❌ NÃO CONFIGURADO');
+
+    try {
+        // 1. ENVIA NOTIFICAÇÃO DO SISTEMA (aparece como alerta/popup)
+        let alertMsg = '🚨 CONTAS A PAGAR: ';
+        if (hoje.length > 0) alertMsg += `${hoje.length} vence(m) HOJE (R$ ${totalHoje.toFixed(2)})`;
+        if (hoje.length > 0 && futuro.length > 0) alertMsg += ' | ';
+        if (futuro.length > 0) alertMsg += `${futuro.length} em 2 dias (R$ ${totalFuturo.toFixed(2)})`;
+
+        console.log('Enviando notificação de alerta...');
+        const notifyResponse = await fetch(baseUrl + "im.notify.system.add", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                "USER_ID": userId,
+                "MESSAGE": alertMsg,
+                "MESSAGE_OUT": alertMsg // Mensagem para push notification
+            })
+        });
+        const notifyResult = await notifyResponse.json();
+        console.log('Resposta notificação:', notifyResult);
+
+        // 2. ENVIA MENSAGEM NO CHAT (mensagem detalhada)
+        console.log('Enviando mensagem no chat...');
+        const msgResponse = await fetch(baseUrl + "im.message.add", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                "DIALOG_ID": userId,
+                "MESSAGE": msg,
+                "SYSTEM": "Y"
+            })
+        });
+        const msgResult = await msgResponse.json();
+        console.log('Resposta mensagem:', msgResult);
+
+        if (msgResult.result) {
+            console.log('✅ Notificações enviadas com sucesso!');
+        } else if (msgResult.error) {
+            console.error('❌ Erro do Bitrix24:', msgResult.error, msgResult.error_description);
+        }
+    } catch (error) {
+        console.error('❌ Erro ao enviar para Bitrix24:', error.message);
+    }
 }

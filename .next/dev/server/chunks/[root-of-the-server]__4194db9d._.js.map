@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 40, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/beeho/Desktop/painelFinanceiro/gestor-financeiro-beehouse/app/api/notify/route.js"],"sourcesContent":["export async function POST(request) {\r\n  try {\r\n    const { message } = await request.json();\r\n\r\n    const webhookUrl = process.env.BITRIX_WEBHOOK_URL + \"im.message.add\";\r\n\r\n    await fetch(webhookUrl, {\r\n      method: 'POST',\r\n      headers: { 'Content-Type': 'application/json' },\r\n      body: JSON.stringify({\r\n        \"DIALOG_ID\": process.env.ID_COLABORADOR_FINANCEIRO,\r\n        \"MESSAGE\": message,\r\n        \"SYSTEM\": \"Y\"\r\n      })\r\n    });\r\n\r\n    return Response.json({ success: true });\r\n  } catch (error) {\r\n    return Response.json({ error: error.message }, { status: 500 });\r\n  }\r\n}"],"names":[],"mappings":";;;;AAAO,eAAe,KAAK,OAAO;IAChC,IAAI;QACF,MAAM,EAAE,OAAO,EAAE,GAAG,MAAM,QAAQ,IAAI;QAEtC,MAAM,aAAa,QAAQ,GAAG,CAAC,kBAAkB,GAAG;QAEpD,MAAM,MAAM,YAAY;YACtB,QAAQ;YACR,SAAS;gBAAE,gBAAgB;YAAmB;YAC9C,MAAM,KAAK,SAAS,CAAC;gBACnB,aAAa,QAAQ,GAAG,CAAC,yBAAyB;gBAClD,WAAW;gBACX,UAAU;YACZ;QACF;QAEA,OAAO,SAAS,IAAI,CAAC;YAAE,SAAS;QAAK;IACvC,EAAE,OAAO,OAAO;QACd,OAAO,SAAS,IAAI,CAAC;YAAE,OAAO,MAAM,OAAO;QAAC,GAAG;YAAE,QAAQ;QAAI;IAC/D;AACF"}}]
-}
