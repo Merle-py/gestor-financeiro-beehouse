@@ -153,18 +153,43 @@ async function gerarRecorrencias() {
 async function verificarVencimentos() {
     console.log('=== VERIFICANDO VENCIMENTOS ===');
     const hoje = new Date().toISOString().split('T')[0];
+
+    // Data de amanhã (1 dia)
+    const amanha = new Date();
+    amanha.setDate(amanha.getDate() + 1);
+    const dataAmanha = amanha.toISOString().split('T')[0];
+
+    // Data em 2 dias
     const futuro = new Date();
     futuro.setDate(futuro.getDate() + 2);
     const dataFuturo = futuro.toISOString().split('T')[0];
 
+    console.log(`Buscando contas atrasadas (antes de ${hoje})`);
     console.log(`Buscando contas que vencem hoje: ${hoje}`);
+    console.log(`Buscando contas que vencem amanhã: ${dataAmanha}`);
     console.log(`Buscando contas que vencem em 2 dias: ${dataFuturo}`);
+
+    // Busca contas ATRASADAS (vencidas) - data menor que hoje e NÃO pagas/canceladas
+    const { data: contasAtrasadas, error: erroAtrasadas } = await supabase
+        .from('transactions')
+        .select('*, suppliers(name)')
+        .lt('due_date', hoje)
+        .eq('type', 'despesa')
+        .not('status', 'in', '("Pago","Cancelado")');
 
     // Busca contas que vencem hoje e NÃO estão pagas ou canceladas
     const { data: contasHoje, error: erroHoje } = await supabase
         .from('transactions')
         .select('*, suppliers(name)')
         .eq('due_date', hoje)
+        .eq('type', 'despesa')
+        .not('status', 'in', '("Pago","Cancelado")');
+
+    // Busca contas que vencem AMANHÃ (1 dia) e NÃO estão pagas ou canceladas
+    const { data: contasAmanha, error: erroAmanha } = await supabase
+        .from('transactions')
+        .select('*, suppliers(name)')
+        .eq('due_date', dataAmanha)
         .eq('type', 'despesa')
         .not('status', 'in', '("Pago","Cancelado")');
 
@@ -176,31 +201,50 @@ async function verificarVencimentos() {
         .eq('type', 'despesa')
         .not('status', 'in', '("Pago","Cancelado")');
 
+    if (erroAtrasadas) console.error('Erro ao buscar contas atrasadas:', erroAtrasadas);
     if (erroHoje) console.error('Erro ao buscar contas de hoje:', erroHoje);
+    if (erroAmanha) console.error('Erro ao buscar contas de amanhã:', erroAmanha);
     if (erroFuturo) console.error('Erro ao buscar contas futuras:', erroFuturo);
 
-    console.log(`Contas vencendo hoje (não pagas): ${contasHoje?.length || 0}`);
+    console.log(`Contas ATRASADAS (não pagas): ${contasAtrasadas?.length || 0}`);
+    if (contasAtrasadas?.length > 0) {
+        console.log('Detalhes das contas atrasadas:', contasAtrasadas.map(c => ({ desc: c.description, due_date: c.due_date, status: c.status, amount: c.amount })));
+    }
+
+    console.log(`Contas vencendo HOJE (não pagas): ${contasHoje?.length || 0}`);
     if (contasHoje?.length > 0) {
         console.log('Detalhes das contas de hoje:', contasHoje.map(c => ({ desc: c.description, status: c.status, amount: c.amount })));
     }
 
-    console.log(`Contas vencendo em 2 dias (não pagas): ${contasFuturo?.length || 0}`);
+    console.log(`Contas vencendo AMANHÃ (não pagas): ${contasAmanha?.length || 0}`);
+    if (contasAmanha?.length > 0) {
+        console.log('Detalhes das contas de amanhã:', contasAmanha.map(c => ({ desc: c.description, status: c.status, amount: c.amount })));
+    }
+
+    console.log(`Contas vencendo em 2 DIAS (não pagas): ${contasFuturo?.length || 0}`);
     if (contasFuturo?.length > 0) {
         console.log('Detalhes das contas futuras:', contasFuturo.map(c => ({ desc: c.description, status: c.status, amount: c.amount })));
     }
 
-    if ((contasHoje && contasHoje.length > 0) || (contasFuturo && contasFuturo.length > 0)) {
-        await enviarParaBitrix(contasHoje || [], contasFuturo || []);
+    const temContas = (contasAtrasadas && contasAtrasadas.length > 0) ||
+        (contasHoje && contasHoje.length > 0) ||
+        (contasAmanha && contasAmanha.length > 0) ||
+        (contasFuturo && contasFuturo.length > 0);
+
+    if (temContas) {
+        await enviarParaBitrix(contasAtrasadas || [], contasHoje || [], contasAmanha || [], contasFuturo || []);
         return 'Notificação enviada';
     }
     console.log('Nenhuma conta para notificar');
     return 'Nada para notificar';
 }
 
-async function enviarParaBitrix(hoje, futuro) {
+async function enviarParaBitrix(atrasadas, hoje, amanha, futuro) {
     console.log('=== ENVIANDO NOTIFICAÇÃO PARA BITRIX24 ===');
 
+    const totalAtrasadas = atrasadas.reduce((sum, i) => sum + i.amount, 0);
     const totalHoje = hoje.reduce((sum, i) => sum + i.amount, 0);
+    const totalAmanha = amanha.reduce((sum, i) => sum + i.amount, 0);
     const totalFuturo = futuro.reduce((sum, i) => sum + i.amount, 0);
     const quebra = "\n";
     const baseUrl = process.env.BITRIX_WEBHOOK_URL;
@@ -209,9 +253,21 @@ async function enviarParaBitrix(hoje, futuro) {
     // Mensagem detalhada para o chat
     let msg = "💰 [B]FINANCEIRO BEEHOUSE[/B]" + quebra + "---------------------------------" + quebra;
 
+    if (atrasadas.length > 0) {
+        msg += `🚨 [B][COLOR=#990000]ATRASADAS (${atrasadas.length})[/COLOR][/B] - Total: R$ ${totalAtrasadas.toFixed(2)}` + quebra;
+        atrasadas.forEach(t => msg += `▪ ${t.description} - R$ ${t.amount} (venceu ${t.due_date})` + quebra);
+        msg += quebra;
+    }
+
     if (hoje.length > 0) {
         msg += `🔴 [B][COLOR=#ff0000]VENCE HOJE (${hoje.length})[/COLOR][/B] - Total: R$ ${totalHoje.toFixed(2)}` + quebra;
         hoje.forEach(t => msg += `▪ ${t.description} - R$ ${t.amount}` + quebra);
+        msg += quebra;
+    }
+
+    if (amanha.length > 0) {
+        msg += `🟠 [B][COLOR=#ff6600]VENCE AMANHÃ (${amanha.length})[/COLOR][/B] - Total: R$ ${totalAmanha.toFixed(2)}` + quebra;
+        amanha.forEach(t => msg += `▪ ${t.description} - R$ ${t.amount}` + quebra);
         msg += quebra;
     }
 
@@ -228,9 +284,12 @@ async function enviarParaBitrix(hoje, futuro) {
     try {
         // 1. ENVIA NOTIFICAÇÃO DO SISTEMA (aparece como alerta/popup)
         let alertMsg = '🚨 CONTAS A PAGAR: ';
-        if (hoje.length > 0) alertMsg += `${hoje.length} vence(m) HOJE (R$ ${totalHoje.toFixed(2)})`;
-        if (hoje.length > 0 && futuro.length > 0) alertMsg += ' | ';
-        if (futuro.length > 0) alertMsg += `${futuro.length} em 2 dias (R$ ${totalFuturo.toFixed(2)})`;
+        const partes = [];
+        if (atrasadas.length > 0) partes.push(`${atrasadas.length} ATRASADA(S) (R$ ${totalAtrasadas.toFixed(2)})`);
+        if (hoje.length > 0) partes.push(`${hoje.length} vence(m) HOJE (R$ ${totalHoje.toFixed(2)})`);
+        if (amanha.length > 0) partes.push(`${amanha.length} amanhã (R$ ${totalAmanha.toFixed(2)})`);
+        if (futuro.length > 0) partes.push(`${futuro.length} em 2 dias (R$ ${totalFuturo.toFixed(2)})`);
+        alertMsg += partes.join(' | ');
 
         console.log('Enviando notificação de alerta...');
         const notifyResponse = await fetch(baseUrl + "im.notify.system.add", {
