@@ -247,11 +247,20 @@ export default function GestorFinanceiro() {
 
     // --- CÁLCULOS FINANCEIROS ---
     const financialMetrics = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
         const data = filteredTransactions.filter(t => t.status !== 'Cancelado');
         const totalDespesas = data.reduce((acc, t) => acc + Number(t.amount), 0);
         const despesasPagas = data.filter(t => t.status === 'Pago').reduce((acc, t) => acc + Number(t.amount), 0);
-        const despesasAbertas = data.filter(t => t.status === 'Aberto').reduce((acc, t) => acc + Number(t.amount), 0);
-        const despesasVencidas = data.filter(t => t.status === 'Vencido').reduce((acc, t) => acc + Number(t.amount), 0);
+
+        // Contas vencidas: status 'Vencido' OU status 'Aberto' com data anterior a hoje
+        const despesasVencidas = data.filter(t =>
+            t.status === 'Vencido' || (t.status === 'Aberto' && t.due_date < today)
+        ).reduce((acc, t) => acc + Number(t.amount), 0);
+
+        // Contas em aberto: apenas as com status 'Aberto' e data >= hoje
+        const despesasAbertas = data.filter(t =>
+            t.status === 'Aberto' && t.due_date >= today
+        ).reduce((acc, t) => acc + Number(t.amount), 0);
 
         return { totalDespesas, despesasPagas, despesasAbertas, despesasVencidas };
     }, [filteredTransactions]);
@@ -705,6 +714,73 @@ export default function GestorFinanceiro() {
                                 <KpiCard title="Em Aberto" icon={Calendar} colorTheme="orange" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasAbertas)} />
                                 <KpiCard title="Vencidos" icon={AlertTriangle} colorTheme="red" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasVencidas)} />
                             </div>
+
+                            {/* CONTAS VENCIDAS - Alerta Crítico */}
+                            {(() => {
+                                const today = new Date().toISOString().split('T')[0];
+                                const todayDate = startOfDay(new Date());
+
+                                const overduePayments = filteredTransactions
+                                    .filter(t => (t.status === 'Aberto' || t.status === 'Vencido') && t.due_date)
+                                    .filter(t => t.due_date < today)
+                                    .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+
+                                if (overduePayments.length === 0) return null;
+
+                                const totalOverdue = overduePayments.reduce((acc, t) => acc + Number(t.amount), 0);
+
+                                return (
+                                    <div className="bg-linear-to-r from-red-50 via-rose-50 to-red-50 p-5 rounded-2xl border border-red-200 shadow-sm">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-red-500 rounded-xl text-white shadow-lg animate-pulse">
+                                                    <AlertTriangle size={20} />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-red-800">⚠️ Contas Vencidas</h3>
+                                                    <p className="text-xs text-red-600">
+                                                        {overduePayments.length} conta(s) atrasada(s) - Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalOverdue)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => setActiveTab('lancamentos')}
+                                                className="text-xs font-bold text-red-700 hover:text-red-900 hover:underline transition-colors"
+                                            >
+                                                Ver todas →
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                                            {overduePayments.slice(0, 5).map(payment => {
+                                                const dueDate = parseISO(payment.due_date);
+                                                const daysOverdue = differenceInCalendarDays(todayDate, dueDate);
+
+                                                return (
+                                                    <div
+                                                        key={payment.id}
+                                                        className="bg-white p-4 rounded-xl border border-red-300 hover:shadow-md transition-all cursor-pointer"
+                                                        onClick={() => openModal('transaction', payment)}
+                                                    >
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-500 text-white">
+                                                                {daysOverdue}d atraso
+                                                            </span>
+                                                            <span className="text-[10px] text-neutral-500">{format(dueDate, 'dd/MM')}</span>
+                                                        </div>
+                                                        <p className="text-sm font-semibold text-neutral-800 truncate mb-1" title={payment.description}>{payment.description}</p>
+                                                        <p className="text-lg font-bold text-red-600">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payment.amount)}</p>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        {overduePayments.length > 5 && (
+                                            <p className="text-xs text-red-600 mt-3 text-center">
+                                                + {overduePayments.length - 5} outra(s) conta(s) vencida(s)
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })()}
 
                             {/* PRÓXIMOS VENCIMENTOS - Alerta Visual */}
                             {(() => {
