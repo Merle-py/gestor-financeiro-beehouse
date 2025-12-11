@@ -262,7 +262,12 @@ export default function GestorFinanceiro() {
             t.status === 'Aberto' && t.due_date >= today
         ).reduce((acc, t) => acc + Number(t.amount), 0);
 
-        return { totalDespesas, despesasPagas, despesasAbertas, despesasVencidas };
+        // Total de multas e juros pagos
+        const totalMultas = data.filter(t => t.status === 'Pago').reduce((acc, t) => acc + Number(t.fine_amount || 0), 0);
+        const totalJuros = data.filter(t => t.status === 'Pago').reduce((acc, t) => acc + Number(t.interest_amount || 0), 0);
+        const totalEncargos = totalMultas + totalJuros;
+
+        return { totalDespesas, despesasPagas, despesasAbertas, despesasVencidas, totalMultas, totalJuros, totalEncargos };
     }, [filteredTransactions]);
 
     const chartData = useMemo(() => {
@@ -715,6 +720,37 @@ export default function GestorFinanceiro() {
                                 <KpiCard title="Vencidos" icon={AlertTriangle} colorTheme="red" value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.despesasVencidas)} />
                             </div>
 
+                            {/* BARRA DE MULTAS E JUROS */}
+                            {financialMetrics.totalEncargos > 0 && (
+                                <div className="bg-linear-to-r from-purple-50 via-violet-50 to-purple-50 p-4 rounded-xl border border-purple-200 shadow-sm">
+                                    <div className="flex items-center justify-between flex-wrap gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-purple-500 rounded-xl text-white shadow-lg">
+                                                <Calculator size={18} />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-purple-800 text-sm">Encargos por Atraso</h3>
+                                                <p className="text-xs text-purple-600">Multas e juros pagos no período</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-6">
+                                            <div className="text-center">
+                                                <p className="text-[10px] text-purple-500 uppercase font-bold">Multas</p>
+                                                <p className="text-lg font-bold text-purple-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.totalMultas)}</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="text-[10px] text-purple-500 uppercase font-bold">Juros</p>
+                                                <p className="text-lg font-bold text-purple-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.totalJuros)}</p>
+                                            </div>
+                                            <div className="text-center border-l border-purple-200 pl-6">
+                                                <p className="text-[10px] text-purple-500 uppercase font-bold">Total Encargos</p>
+                                                <p className="text-xl font-extrabold text-purple-800">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(financialMetrics.totalEncargos)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* CONTAS VENCIDAS - Alerta Crítico */}
                             {(() => {
                                 const today = new Date().toISOString().split('T')[0];
@@ -908,7 +944,17 @@ export default function GestorFinanceiro() {
                                                         <td className="px-6 py-4 font-medium text-neutral-900">{t.description}</td>
                                                         <td className="px-6 py-4 text-neutral-500">{t.suppliers?.name}</td>
                                                         <td className="px-6 py-4 text-neutral-500"><span className="bg-neutral-100 px-2 py-1 rounded text-xs">{t.categories?.name}</span></td>
-                                                        <td className="px-6 py-4 text-right font-bold text-base text-rose-600">- {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}</td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <div className="flex flex-col items-end">
+                                                                <span className="font-bold text-base text-rose-600">- {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}</span>
+                                                                {t.status === 'Pago' && (Number(t.fine_amount || 0) > 0 || Number(t.interest_amount || 0) > 0) && (
+                                                                    <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded mt-0.5 flex items-center gap-1">
+                                                                        <Calculator size={10} />
+                                                                        +{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(t.fine_amount || 0) + Number(t.interest_amount || 0))}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
                                                         <td className="px-6 py-4 text-center">
                                                             <div className="flex justify-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                                                                 {(t.status === 'Aberto' || t.status === 'Vencido') && <><button onClick={() => updateStatus(t.id, 'Pago')} className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition" title="Pagar"><Check size={16} /></button><button onClick={() => updateStatus(t.id, 'Cancelado')} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-100 transition" title="Cancelar"><Ban size={16} /></button></>}
@@ -946,9 +992,18 @@ export default function GestorFinanceiro() {
                                                                 <p className="text-xs text-neutral-500 mb-3 flex items-center gap-1"><Building2 size={10} /> {t.suppliers?.name}</p>
 
                                                                 <div className="flex justify-between items-end border-t border-dashed border-neutral-100 pt-3">
-                                                                    <span className={`font-extrabold text-base ${t.type === 'receita' ? 'text-emerald-600' : 'text-neutral-800'}`}>
-                                                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}
-                                                                    </span>
+                                                                    <div className="flex flex-col">
+                                                                        <span className={`font-extrabold text-base ${t.type === 'receita' ? 'text-emerald-600' : 'text-neutral-800'}`}>
+                                                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.amount)}
+                                                                        </span>
+                                                                        {/* Badge de Multas e Juros */}
+                                                                        {t.status === 'Pago' && (Number(t.fine_amount || 0) > 0 || Number(t.interest_amount || 0) > 0) && (
+                                                                            <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded mt-1 flex items-center gap-1 w-fit">
+                                                                                <Calculator size={10} />
+                                                                                +{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(t.fine_amount || 0) + Number(t.interest_amount || 0))} encargos
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
 
                                                                     {(t.status === 'Aberto' || t.status === 'Vencido') && (
                                                                         <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
